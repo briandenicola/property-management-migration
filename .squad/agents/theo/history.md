@@ -24,3 +24,8 @@
 - `src/PropertyManager.Web/web.config` — full IIS config with inline history comments
 - `src/PropertyManager.Web/web.Release.config` — XDT production transform
 - `docs/iis-setup.md` — complete IIS setup and deployment guide
+
+### 2026-04-29T20:55:27Z — Scribe: Decisions Archived
+- IIS configuration decision merged and consolidated in decisions.md
+- Orchestration log created at `.squad/orchestration-log/2026-04-29T20-40-56-theo.md`
+- Team decisions now available for all agents to reference

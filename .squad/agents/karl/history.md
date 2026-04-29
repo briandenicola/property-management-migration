@@ -13,3 +13,8 @@
 - 2026-04-29T20:40:56.058Z: Implemented EF6 data layer in `src/PropertyManager.Data` with entities, `PropertyManagerContext`, repository implementations, and initial migration `Migrations/20260429204056_InitialCreate.cs`.
 - 2026-04-29T20:40:56.058Z: Added SQL schema script at `database/schema.sql` including intentional `Attachments.FileData VARBINARY(MAX)` blob storage anti-pattern for migration story alignment.
 - 2026-04-29T20:40:56.058Z: User preference reaffirmed: authentic legacy coding style over modern DI-first design while keeping migration path toward Azure App Service + Azure SQL in config transforms.
+
+### 2026-04-29T20:55:27Z — Scribe: Decisions Archived
+- Backend structure decision merged and consolidated in decisions.md
+- Orchestration log created at `.squad/orchestration-log/2026-04-29T20-40-56-karl.md`
+- Team architecture decisions now unified and available for reference
