@@ -310,6 +310,20 @@ ASALocalRun/
 wwwroot/
 
 # ============================================================
+# Terraform
+# ============================================================
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ============================================================
 # Squad: ignore runtime state (logs, inbox, sessions)
 # ============================================================
 .squad/orchestration-log/

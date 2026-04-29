@@ -1,0 +1,22 @@
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.80"
+    }
+  }
+
+  # Uncomment for remote state storage:
+  # backend "azurerm" {
+  #   resource_group_name  = "tfstate-rg"
+  #   storage_account_name = "pmtfstate"
+  #   container_name       = "tfstate"
+  #   key                  = "legacy.terraform.tfstate"
+  # }
+}
+
+provider "azurerm" {
+  features {}
+}
