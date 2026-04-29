@@ -49,3 +49,8 @@
 - Architecture blueprint decision documented in consolidated decisions.md
 - Orchestration log created at `.squad/orchestration-log/2026-04-29T20-40-56-mcclane.md`
 - Team decisions now consolidated and ready for git commit
+
+### 2026-04-29T21:02:29Z — Scribe: Inbox Merged
+- Terraform infrastructure decisions now in Active Decisions
+- Legacy VM and PaaS target configurations available for reference
+- Infrastructure provisioning can be initiated independently before app deployment

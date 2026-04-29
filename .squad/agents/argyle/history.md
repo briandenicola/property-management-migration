@@ -15,3 +15,7 @@
 - Frontend structure decision merged and consolidated in decisions.md
 - Orchestration log created at `.squad/orchestration-log/2026-04-29T20-40-56-argyle.md`
 - All team architecture decisions now unified and available for reference
+
+### 2026-04-29T21:02:29Z — Scribe: Inbox Merged
+- Decisions now live in Active Decisions section of decisions.md
+- Infrastructure team decisions available; App Service URL output confirmed for API base configuration

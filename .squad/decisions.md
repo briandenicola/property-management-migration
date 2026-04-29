@@ -106,6 +106,42 @@ Implement legacy frontend as raw-file AngularJS 1.6 app under `src/PropertyManag
 - WebDAV removal can be dropped from transformed configs
 - xcopy replaced by CI/CD pipeline (out of scope)
 
+### 2026-04-29T20:58:45.246Z: .gitignore and Binary Tracking Cleanup
+**By:** Theo  
+**Status:** Accepted
+
+Added a comprehensive .NET Framework 4.6 / Visual Studio 2015-era .gitignore and removed previously committed NuGet package binaries and MSBuild obj artifacts from git tracking.
+
+**Key Rules:**
+1. `src/packages/` is never committed — NuGet restore produces it from packages.config
+2. `bin/` and `obj/` are never committed — MSBuild output, always reproducible
+3. `.vs/`, `*.suo`, `*.user` are never committed — developer-local VS settings
+
+**Team Impact:**
+- Fresh clones won't have `src/packages/` — developers must run NuGet restore before first build
+- Karl: ensure build instructions note NuGet restore requirement
+
+### 2026-04-29T21:01:36Z: Terraform Infrastructure Structure
+**By:** Theo  
+**Status:** Proposed
+
+Terraform IaC lives under `infrastructure/` with two independent configurations:
+- `infrastructure/legacy/` — Windows Server 2016 VM (IIS + SQL Express)
+- `infrastructure/azure/` — PaaS target (App Service + Azure SQL + Blob Storage)
+
+**Key Choices:**
+1. azurerm provider ~> 3.80 — stable, well-documented
+2. SQL Auth (not AAD) — matches legacy app's SqlClient connection pattern
+3. Separate state files — legacy and modern are independent
+4. S1 App Service Plan — minimum tier with always-on
+5. S0 Azure SQL — cheapest standard tier with SLA
+6. Blob container named `attachments` — matches migration story
+
+**Team Impact:**
+- Karl: Connection string format for Azure SQL is in Terraform outputs
+- Argyle: App Service URL output for API base URL configuration
+- McClane: Infrastructure can be provisioned independently before app code is deployed
+
 ## Governance
 
 - All meaningful changes require team consensus
