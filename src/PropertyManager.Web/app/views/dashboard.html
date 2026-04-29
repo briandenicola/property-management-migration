@@ -1,0 +1,46 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="page-header legacy-page-header">
+            <h2><span class="glyphicon glyphicon-dashboard"></span> Dashboard <small>Operations overview</small></h2>
+        </div>
+    </div>
+</div>
+
+<div class="row" ng-if="!vm.loading">
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-primary metric-panel">
+            <div class="panel-heading">Total Requests</div>
+            <div class="panel-body text-center">
+                <h3>{{vm.metrics.totalRequests}}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-warning metric-panel">
+            <div class="panel-heading">Open Requests</div>
+            <div class="panel-body text-center">
+                <h3>{{vm.metrics.openRequests}}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-info metric-panel">
+            <div class="panel-heading">In Progress</div>
+            <div class="panel-body text-center">
+                <h3>{{vm.metrics.inProgressRequests}}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-success metric-panel">
+            <div class="panel-heading">Properties / Tenants</div>
+            <div class="panel-body text-center">
+                <h3>{{vm.metrics.properties}} / {{vm.metrics.tenants}}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="well text-center" ng-if="vm.loading">
+    <span class="glyphicon glyphicon-refresh spinning"></span> Loading dashboard...
+</div>

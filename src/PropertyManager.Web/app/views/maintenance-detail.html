@@ -1,0 +1,92 @@
+<div class="row">
+    <div class="col-md-12">
+        <h2><span class="glyphicon glyphicon-file"></span> Maintenance Request Detail</h2>
+        <hr />
+    </div>
+</div>
+
+<div class="well text-center" ng-if="vm.loading">
+    <span class="glyphicon glyphicon-refresh spinning"></span> Loading request...
+</div>
+
+<div class="row" ng-if="!vm.loading && vm.request">
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <strong>{{vm.request.title}}</strong>
+                <span class="label pull-right" ng-class="{'label-warning': vm.request.status === 'Open','label-info': vm.request.status === 'InProgress','label-success': vm.request.status === 'Completed','label-default': vm.request.status === 'Closed'}">{{vm.request.status}}</span>
+            </div>
+            <div class="panel-body">
+                <p>{{vm.request.description}}</p>
+                <dl class="dl-horizontal">
+                    <dt>Property</dt>
+                    <dd>{{vm.request.propertyName}}</dd>
+                    <dt>Tenant</dt>
+                    <dd>{{vm.request.tenantName}}</dd>
+                    <dt>Priority</dt>
+                    <dd>{{vm.request.priority}}</dd>
+                    <dt>Created</dt>
+                    <dd>{{vm.request.createdDate | date:'medium'}}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Status History</div>
+            <table class="table table-condensed">
+                <thead>
+                    <tr>
+                        <th>Changed On</th>
+                        <th>Changed By</th>
+                        <th>New Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="item in vm.statusHistory">
+                        <td>{{item.changedOn | date:'short'}}</td>
+                        <td>{{item.changedBy}}</td>
+                        <td>{{item.newStatus}}</td>
+                    </tr>
+                    <tr ng-if="!vm.statusHistory.length">
+                        <td colspan="3" class="text-muted">No history available.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">Actions</div>
+            <div class="panel-body">
+                <div class="btn-group-vertical btn-block">
+                    <button type="button" class="btn btn-default" ng-repeat="status in vm.statuses" ng-click="vm.updateStatus(status)">
+                        Set {{status}}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">Attachments</div>
+            <div class="panel-body">
+                <ul class="list-group" ng-if="vm.attachments.length">
+                    <li class="list-group-item" ng-repeat="att in vm.attachments">
+                        <span class="glyphicon glyphicon-paperclip"></span>
+                        <a ng-href="{{vm.getDownloadUrl(att.id)}}" target="_blank">{{att.fileName}}</a>
+                        <span class="badge">{{att.fileSize | number}} B</span>
+                    </li>
+                </ul>
+                <p class="text-muted" ng-if="!vm.attachments.length">No files attached.</p>
+                <hr />
+                <input type="file" class="form-control" file-change="vm.onFilesSelected(files)" />
+                <div class="progress top-buffer" ng-if="vm.uploadProgress > 0">
+                    <div class="progress-bar" role="progressbar" aria-valuenow="{{vm.uploadProgress}}" aria-valuemin="0" aria-valuemax="100" ng-style="{'width': vm.uploadProgress + '%'}">
+                        {{vm.uploadProgress}}%
+                    </div>
+                </div>
+                <p class="help-block" ng-if="vm.uploadMessage">{{vm.uploadMessage}}</p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,80 @@
+<div class="row">
+    <div class="col-md-12">
+        <h2><span class="glyphicon glyphicon-wrench"></span> Maintenance Requests</h2>
+        <hr />
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">Filters</div>
+    <div class="panel-body">
+        <form class="form-inline" ng-submit="vm.applyFilters()">
+            <div class="form-group">
+                <label>Status</label>
+                <select class="form-control" ng-model="vm.filters.status">
+                    <option value="">All</option>
+                    <option ng-repeat="status in vm.statuses" value="{{status}}">{{status}}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Priority</label>
+                <select class="form-control" ng-model="vm.filters.priority">
+                    <option ng-repeat="priority in vm.priorities" value="{{priority}}">{{priority || 'All'}}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Property</label>
+                <select class="form-control" ng-model="vm.filters.propertyId">
+                    <option value="">All</option>
+                    <option ng-repeat="property in vm.properties" value="{{property.id}}">{{property.name || property.addressLine1}}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tenant</label>
+                <select class="form-control" ng-model="vm.filters.tenantId">
+                    <option value="">All</option>
+                    <option ng-repeat="tenant in vm.tenants" value="{{tenant.id}}">{{tenant.firstName}} {{tenant.lastName}}</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-filter"></span> Apply</button>
+            <button type="button" class="btn btn-default" ng-click="vm.clearFilters()">Clear</button>
+        </form>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">Request Queue</div>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Property</th>
+                    <th>Tenant</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="request in vm.requests" ui-sref="maintenanceDetail({ id: request.id })" class="clickable-row">
+                    <td>#{{request.id}}</td>
+                    <td>{{request.title}}</td>
+                    <td>{{request.propertyName}}</td>
+                    <td>{{request.tenantName}}</td>
+                    <td><span class="label label-default">{{request.priority}}</span></td>
+                    <td><span class="label" ng-class="{'label-warning': request.status === 'Open','label-info': request.status === 'InProgress','label-success': request.status === 'Completed','label-default': request.status === 'Closed'}">{{request.status}}</span></td>
+                    <td>{{request.createdDate | date:'short'}}</td>
+                </tr>
+                <tr ng-if="!vm.requests.length && !vm.loading">
+                    <td colspan="7" class="text-muted text-center">No requests match your filter.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="well text-center" ng-if="vm.loading">
+    <span class="glyphicon glyphicon-refresh spinning"></span> Loading maintenance requests...
+</div>

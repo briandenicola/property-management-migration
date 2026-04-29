@@ -1,0 +1,57 @@
+<div class="row">
+    <div class="col-md-12">
+        <h2><span class="glyphicon glyphicon-user"></span> Tenants</h2>
+        <hr />
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">Search</div>
+    <div class="panel-body">
+        <form class="form-inline" ng-submit="vm.search()">
+            <div class="form-group">
+                <label>Property</label>
+                <select class="form-control" ng-model="vm.filters.propertyId">
+                    <option value="">All</option>
+                    <option ng-repeat="property in vm.properties" value="{{property.id}}">{{property.name || property.addressLine1}}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" class="form-control" ng-model="vm.filters.search" placeholder="Tenant name" />
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">Tenant Directory</div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Property</th>
+                <th>Unit</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="tenant in vm.tenants">
+                <td>{{tenant.firstName}} {{tenant.lastName}}</td>
+                <td>{{tenant.email}}</td>
+                <td>{{tenant.phoneNumber}}</td>
+                <td>{{tenant.propertyName}}</td>
+                <td>{{tenant.unitNumber}}</td>
+            </tr>
+            <tr ng-if="!vm.tenants.length && !vm.loading">
+                <td colspan="5" class="text-center text-muted">No tenants found.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="well text-center" ng-if="vm.loading">
+    <span class="glyphicon glyphicon-refresh spinning"></span> Loading tenants...
+</div>

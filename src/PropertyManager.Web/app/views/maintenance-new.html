@@ -1,0 +1,84 @@
+<div class="row">
+    <div class="col-md-12">
+        <h2><span class="glyphicon glyphicon-plus-sign"></span> New Maintenance Request</h2>
+        <hr />
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">Request Details</div>
+            <div class="panel-body">
+                <form name="requestForm" ng-submit="vm.submit()" novalidate>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" class="form-control" ng-model="vm.request.title" required maxlength="200" />
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" ng-model="vm.request.description" rows="6" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label>Priority</label>
+                                <select class="form-control" ng-model="vm.request.priority" required>
+                                    <option>Low</option>
+                                    <option>Medium</option>
+                                    <option>High</option>
+                                    <option>Emergency</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label>Property</label>
+                                <select class="form-control" ng-model="vm.request.propertyId" ng-options="p.id as (p.name || p.addressLine1) for p in vm.properties" required>
+                                    <option value="">Select property</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label>Tenant</label>
+                                <select class="form-control" ng-model="vm.request.tenantId" ng-options="t.id as (t.firstName + ' ' + t.lastName) for t in vm.tenants" required>
+                                    <option value="">Select tenant</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" ng-disabled="requestForm.$invalid || vm.saving">
+                        <span class="glyphicon glyphicon-floppy-disk"></span> Submit Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">File Uploads</div>
+            <div class="panel-body">
+                <div class="legacy-dropzone" file-dropzone="vm.onFilesSelected(files)">
+                    <p class="text-muted text-center"><span class="glyphicon glyphicon-open-file"></span> Drag files here</p>
+                    <p class="text-center"><strong>or</strong></p>
+                    <input type="file" class="form-control" multiple file-change="vm.onFilesSelected(files)" />
+                    <p class="help-block">Allowed: JPG, PNG, GIF, PDF, DOC, DOCX (max 10MB each)</p>
+                </div>
+                <p class="text-danger" ng-if="vm.validationMessage">{{vm.validationMessage}}</p>
+                <ul class="list-group top-buffer" ng-if="vm.uploadQueue.length">
+                    <li class="list-group-item" ng-repeat="item in vm.uploadQueue track by $index">
+                        <button type="button" class="close" aria-label="Remove" ng-click="vm.removeFile($index)"><span aria-hidden="true">&times;</span></button>
+                        <span class="glyphicon glyphicon-paperclip"></span> {{item.name}}
+                        <small class="text-muted">({{item.size | number}} bytes)</small>
+                        <div class="progress top-buffer" ng-if="item.progress > 0">
+                            <div class="progress-bar" role="progressbar" ng-style="{'width': item.progress + '%'}">{{item.progress}}%</div>
+                        </div>
+                        <img ng-if="item.previewUrl" ng-src="{{item.previewUrl}}" class="img-thumbnail top-buffer upload-preview" alt="Preview" />
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

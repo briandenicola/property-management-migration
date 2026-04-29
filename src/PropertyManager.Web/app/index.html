@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html ng-app="propertyManagerApp">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PropertyPro Legacy</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/site.css" />
+</head>
+<body ng-controller="MainController as main">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#legacy-navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" ui-sref="dashboard"><span class="glyphicon glyphicon-home"></span> PropertyPro</a>
+            </div>
+            <div class="collapse navbar-collapse" id="legacy-navbar" ng-if="main.isLoggedIn()">
+                <ul class="nav navbar-nav">
+                    <li><a ui-sref="dashboard">Dashboard</a></li>
+                    <li><a ui-sref="maintenanceList">Maintenance</a></li>
+                    <li><a ui-sref="maintenanceNew"><span class="glyphicon glyphicon-plus-sign"></span> New Request</a></li>
+                    <li><a ui-sref="propertiesList">Properties</a></li>
+                    <li><a ui-sref="tenantsList">Tenants</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="navbar-text" ng-if="currentUser">Signed in as {{currentUser.username || currentUser.name}}</li>
+                    <li><a href="" ng-click="main.logout()"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid app-container">
+        <div ui-view></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.10/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/1.0.30/angular-ui-router.min.js"></script>
+
+    <script src="app.js"></script>
+    <script src="services/authService.js"></script>
+    <script src="services/maintenanceRequestService.js"></script>
+    <script src="services/propertyService.js"></script>
+    <script src="services/tenantService.js"></script>
+    <script src="services/fileUploadService.js"></script>
+    <script src="directives/fileDirectives.js"></script>
+    <script src="controllers/controllers.js"></script>
+</body>
+</html>

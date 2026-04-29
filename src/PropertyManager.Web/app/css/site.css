@@ -1,0 +1,87 @@
+body {
+    padding-top: 60px;
+    background-color: #f0f2f5;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #333;
+}
+
+.app-container {
+    padding-bottom: 30px;
+}
+
+.legacy-page-header {
+    margin-top: 10px;
+    border-bottom: 1px solid #d9d9d9;
+}
+
+.navbar-inverse {
+    background: #2f3e4e;
+    border-color: #243241;
+}
+
+.navbar-inverse .navbar-brand,
+.navbar-inverse .navbar-nav > li > a,
+.navbar-inverse .navbar-text {
+    color: #d9e1ea;
+}
+
+.panel {
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.panel-heading {
+    font-weight: 600;
+}
+
+.metric-panel h3 {
+    margin: 6px 0;
+    font-weight: bold;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.clickable-row:hover {
+    background-color: #fcfcfc;
+}
+
+.top-buffer {
+    margin-top: 10px;
+}
+
+.legacy-dropzone {
+    border: 2px dashed #b6c2cc;
+    background: #fafafa;
+    padding: 15px;
+    border-radius: 2px;
+}
+
+.legacy-dropzone.drag-over {
+    background: #eef6ff;
+    border-color: #337ab7;
+}
+
+.upload-preview {
+    max-height: 120px;
+    width: auto;
+}
+
+.login-row {
+    margin-top: 70px;
+}
+
+.login-panel {
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+}
+
+.spinning {
+    display: inline-block;
+    animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(359deg); }
+}
