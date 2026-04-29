@@ -1,0 +1,36 @@
+{
+  "agents": {
+    "mcclane": {
+      "persistent_name": "McClane",
+      "universe": "Die Hard",
+      "role": "Lead",
+      "created_at": "2026-04-29T20:28:14Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "argyle": {
+      "persistent_name": "Argyle",
+      "universe": "Die Hard",
+      "role": "Frontend Dev",
+      "created_at": "2026-04-29T20:28:14Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "karl": {
+      "persistent_name": "Karl",
+      "universe": "Die Hard",
+      "role": "Backend Dev",
+      "created_at": "2026-04-29T20:28:14Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "theo": {
+      "persistent_name": "Theo",
+      "universe": "Die Hard",
+      "role": "Cloud/DevOps",
+      "created_at": "2026-04-29T20:28:14Z",
+      "legacy_named": false,
+      "status": "active"
+    }
+  }
+}

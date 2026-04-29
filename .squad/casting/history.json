@@ -1,0 +1,17 @@
+{
+  "universe_usage_history": [
+    {
+      "universe": "Die Hard",
+      "used_at": "2026-04-29T20:28:14Z",
+      "project": "property-management-migration"
+    }
+  ],
+  "assignment_cast_snapshots": {
+    "assignment-001": {
+      "assignment_id": "assignment-001",
+      "universe": "Die Hard",
+      "created_at": "2026-04-29T20:28:14Z",
+      "agents": ["mcclane", "argyle", "karl", "theo"]
+    }
+  }
+}
