@@ -1,0 +1,43 @@
+version: '3'
+
+env:
+  DEFAULT_REGION: "eastus"
+
+tasks:
+  up:
+    desc: Creates the legacy infrastructure in Azure
+    cmds:
+    - task: init
+    - task: apply
+
+  init:
+    desc: Initializes Terraform
+    cmds:
+    - terraform workspace new {{.REGION}} || true
+    - terraform workspace select {{.REGION}}
+    - terraform init
+    vars:
+      REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  apply:
+    desc: Applies Terraform configuration
+    cmds:
+    - terraform apply -auto-approve -var "location={{.REGION}}" -compact-warnings
+    vars:
+      REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  plan:
+    desc: Shows Terraform execution plan
+    cmds:
+    - terraform plan -var "location={{.REGION}}" -compact-warnings
+    vars:
+      REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  down:
+    desc: Destroys all Azure resources and cleans up Terraform
+    cmds:
+    - az group delete -n {{.RG}} --yes --no-wait || true
+    - powershell -Command "Remove-Item -Recurse -Force terraform.tfstate.d, .terraform.lock.hcl, .terraform, terraform.tfstate, terraform.tfstate.backup, .terraform.tfstate.lock.info -ErrorAction SilentlyContinue"
+    vars:
+      RG:
+        sh: terraform output -raw resource_group_name
