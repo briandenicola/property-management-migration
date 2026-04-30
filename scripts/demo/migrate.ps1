@@ -303,14 +303,13 @@ if ($DryRun) {
 Write-Header "Step 3 — Package"
 Write-Step "Creating deployment zip: $ZipPath..."
 
-if (Test-Path $ZipPath) {
-    Remove-Item $ZipPath -Force
-    Start-Sleep -Milliseconds 500
-}
-
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $retries = 3
 for ($i = 1; $i -le $retries; $i++) {
+    if (Test-Path $ZipPath) {
+        Remove-Item $ZipPath -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Milliseconds 500
+    }
     try {
         [System.IO.Compression.ZipFile]::CreateFromDirectory($PublishDir, $ZipPath)
         break
