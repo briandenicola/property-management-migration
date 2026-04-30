@@ -23,7 +23,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$LogFile = "C:\WindowsTemp\setup-legacy-server.log"
+$LogFile = ".\setup-legacy-server.log"
 
 function Write-Log {
     param([string]$Message)
@@ -92,43 +92,43 @@ Write-Log "IIS and ASP.NET 4.6 features installed"
 
 # Install URL Rewrite Module (required for AngularJS HTML5 routing)
 Write-Log "Installing URL Rewrite Module..."
-$rewriteUrl = "https://download.microsoft.com/download/1/2/8/128E2E22-C1B9-44A4-BE2A-5859ED1D4592/rewrite_amd64_en-US.msi"
-$rewriteMsi = "C:\WindowsTemp\rewrite_amd64.msi"
-Invoke-WebRequest -Uri $rewriteUrl -OutFile $rewriteMsi -UseBasicParsing
-Start-Process msiexec.exe -ArgumentList "/i `"$rewriteMsi`" /qn" -Wait -NoNewWindow
-Write-Log "URL Rewrite Module installed"
+# $rewriteUrl = "https://download.microsoft.com/download/1/2/8/128E2E22-C1B9-44A4-BE2A-5859ED1D4592/rewrite_amd64_en-US.msi"
+# $rewriteMsi = ".\rewrite_amd64.msi"
+# Invoke-WebRequest -Uri $rewriteUrl -OutFile $rewriteMsi -UseBasicParsing
+# Start-Process msiexec.exe -ArgumentList "/i `"$rewriteMsi`" /qn" -Wait -NoNewWindow
+# Write-Log "URL Rewrite Module installed"
 
 # ============================================================
 # 3. Install SQL Server 2016 Express
 # ============================================================
 Write-Log "Downloading SQL Server 2016 Express..."
 
-$sqlExpressUrl = "https://download.microsoft.com/download/9/0/7/907AD35F-9F9C-43A5-9789-52470555DB90/ENU/SQLEXPR_x64_ENU.exe"
-$sqlInstaller = "C:\WindowsTemp\SQLEXPR_x64_ENU.exe"
-Invoke-WebRequest -Uri $sqlExpressUrl -OutFile $sqlInstaller -UseBasicParsing
+# $sqlExpressUrl = "https://download.microsoft.com/download/9/0/7/907AD35F-9F9C-43A5-9789-52470555DB90/ENU/SQLEXPR_x64_ENU.exe"
+# $sqlInstaller = ".\SQLEXPR_x64_ENU.exe"
+# Invoke-WebRequest -Uri $sqlExpressUrl -OutFile $sqlInstaller -UseBasicParsing
 
-Write-Log "Installing SQL Server 2016 Express..."
+# Write-Log "Installing SQL Server 2016 Express..."
 
-# Extract and run setup
-Start-Process -FilePath $sqlInstaller -ArgumentList "/qs /x:C:\WindowsTemp\SQLSetup" -Wait -NoNewWindow
+# # Extract and run setup
+# Start-Process -FilePath $sqlInstaller -ArgumentList "/qs /x:.\\SQLSetup" -Wait -NoNewWindow
 
-$setupArgs = @(
-    "/Q",
-    "/ACTION=Install",
-    "/FEATURES=SQLEngine",
-    "/INSTANCENAME=SQLEXPRESS",
-    "/SQLSVCACCOUNT=`"NT AUTHORITY\NETWORK SERVICE`"",
-    "/SQLSYSADMINACCOUNTS=`"BUILTIN\Administrators`"",
-    "/SECURITYMODE=SQL",
-    "/SAPWD=`"$SqlSaPassword`"",
-    "/SQLUSERDBDIR=`"F:\SQLData`"",
-    "/SQLUSERDBLOGDIR=`"F:\SQLLog`"",
-    "/SQLBACKUPDIR=`"F:\SQLBackup`"",
-    "/TCPENABLED=1",
-    "/IACCEPTSQLSERVERLICENSETERMS"
-)
+# $setupArgs = @(
+#     "/Q",
+#     "/ACTION=Install",
+#     "/FEATURES=SQLEngine",
+#     "/INSTANCENAME=SQLEXPRESS",
+#     "/SQLSVCACCOUNT=`"NT AUTHORITY\NETWORK SERVICE`"",
+#     "/SQLSYSADMINACCOUNTS=`"BUILTIN\Administrators`"",
+#     "/SECURITYMODE=SQL",
+#     "/SAPWD=`"$SqlSaPassword`"",
+#     "/SQLUSERDBDIR=`"F:\SQLData`"",
+#     "/SQLUSERDBLOGDIR=`"F:\SQLLog`"",
+#     "/SQLBACKUPDIR=`"F:\SQLBackup`"",
+#     "/TCPENABLED=1",
+#     "/IACCEPTSQLSERVERLICENSETERMS"
+# )
 
-Start-Process -FilePath "C:\WindowsTemp\SQLSetup\setup.exe" -ArgumentList ($setupArgs -join " ") -Wait -NoNewWindow
+Start-Process -FilePath ".\SQLSetup\setup.exe" -ArgumentList ($setupArgs -join " ") -Wait -NoNewWindow
 Write-Log "SQL Server 2016 Express installed"
 
 # Enable TCP/IP and set port 1433
@@ -136,8 +136,8 @@ Write-Log "Configuring SQL Server network protocols..."
 Import-Module "sqlps" -DisableNameChecking -ErrorAction SilentlyContinue
 
 # Start SQL Server service
-Set-Service -Name "MSSQL`$SQLEXPRESS" -StartupType Automatic
-Start-Service -Name "MSSQL`$SQLEXPRESS" -ErrorAction SilentlyContinue
+Set-Service -Name MSSQLSERVER -StartupType Automatic
+Start-Service -Name MSSQLSERVER -ErrorAction SilentlyContinue
 Start-Service -Name "SQLBrowser" -ErrorAction SilentlyContinue
 Set-Service -Name "SQLBrowser" -StartupType Automatic
 
@@ -186,10 +186,10 @@ $attempts = 0
 do {
     $attempts++
     Start-Sleep -Seconds 5
-    $sqlReady = sqlcmd -S ".\SQLEXPRESS" -U sa -P $SqlSaPassword -Q "SELECT 1" 2>$null
+    $sqlReady = sqlcmd -U sa -P $SqlSaPassword -Q "SELECT 1" 2>$null
 } while (-not $sqlReady -and $attempts -lt 12)
 
-sqlcmd -S ".\SQLEXPRESS" -U sa -P $SqlSaPassword -Q $sqlCmd
+sqlcmd -U sa -P $SqlSaPassword -Q $sqlCmd
 Write-Log "PropertyManager database created"
 
 # ============================================================

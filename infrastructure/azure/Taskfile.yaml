@@ -1,7 +1,5 @@
 version: '3'
 
-env:
-  DEFAULT_REGION: "eastus"
 
 tasks:
   up:

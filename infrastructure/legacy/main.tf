@@ -206,35 +206,3 @@ resource "azurerm_virtual_machine_data_disk_attachment" "sql_data" {
   caching            = "ReadOnly"
 }
 
-# --- Custom Script Extension (IIS + SQL Server Express Setup) ---
-
-resource "azurerm_virtual_machine_extension" "setup" {
-  name                 = "${local.resource_name}-setup"
-  virtual_machine_id   = azurerm_windows_virtual_machine.this.id
-  publisher            = "Microsoft.Compute"
-  type                 = "CustomScriptExtension"
-  type_handler_version = "1.10"
-
-  tags = {
-    Application = var.tags
-    DeployedOn  = timestamp()
-  }
-
-  settings = <<SETTINGS
-    {
-      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File setup-legacy-server.ps1 -SqlSaPassword '${random_password.sql.result}' -AdminUsername '${var.admin_username}'"
-    }
-SETTINGS
-
-  protected_settings = <<PROTECTED
-    {
-      "fileUris": ["https://raw.githubusercontent.com/placeholder/setup-legacy-server.ps1"]
-    }
-PROTECTED
-
-  depends_on = [azurerm_virtual_machine_data_disk_attachment.sql_data]
-
-  lifecycle {
-    ignore_changes = [settings, protected_settings]
-  }
-}
