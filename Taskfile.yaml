@@ -1,0 +1,95 @@
+version: '3'
+
+env:
+  APP_TITLE: "Property Manager Legacy"
+  DEFAULT_REGION: "eastus"
+  MSBUILD: "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe"
+  SOLUTION_DIR: "{{.ROOT_DIR}}\\src"
+  SOLUTION_FILE: "{{.ROOT_DIR}}\\src\\PropertyManager.sln"
+  WEB_PROJECT: "{{.ROOT_DIR}}\\src\\PropertyManager.Web\\PropertyManager.Web.csproj"
+  PUBLISH_DIR: "{{.ROOT_DIR}}\\publish"
+  INFRA_DIR: "{{.ROOT_DIR}}\\infrastructure"
+
+tasks:
+  default:
+    cmds:
+    - task --list
+
+  build:
+    desc: Builds the solution in Release configuration
+    cmds:
+    - task: clean
+    - task: restore
+    - task: compile
+    - task: publish
+
+  clean:
+    desc: Cleans the publish output directory
+    cmds:
+    - powershell -Command "if (Test-Path '{{.PUBLISH_DIR}}') { Remove-Item -Recurse -Force '{{.PUBLISH_DIR}}' }"
+    - powershell -Command "New-Item -ItemType Directory -Path '{{.PUBLISH_DIR}}' -Force | Out-Null"
+
+  restore:
+    desc: Restores NuGet packages
+    cmds:
+    - '"{{.MSBUILD}}" "{{.SOLUTION_FILE}}" /t:Restore /p:RestorePackagesConfig=true /verbosity:minimal /nologo'
+
+  compile:
+    desc: Compiles the solution in Release mode
+    cmds:
+    - '"{{.MSBUILD}}" "{{.SOLUTION_FILE}}" /t:Build /p:Configuration=Release /verbosity:minimal /nologo /m'
+
+  publish:
+    desc: Publishes the web project to the publish/ folder
+    cmds:
+    - '"{{.MSBUILD}}" "{{.WEB_PROJECT}}" /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FileSystem /p:publishUrl={{.PUBLISH_DIR}} /p:DeleteExistingFiles=true /verbosity:minimal /nologo /m'
+
+  up:
+    desc: Creates the {{.APP_TITLE}} infrastructure in Azure
+    dir: "{{.INFRA_DIR}}"
+    cmds:
+    - task: init
+    - task: apply
+
+  init:
+    desc: Initializes Terraform
+    dir: "{{.INFRA_DIR}}"
+    cmds:
+    - terraform workspace new {{.REGION}} || true
+    - terraform workspace select {{.REGION}}
+    - terraform init
+    vars:
+      REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  apply:
+    desc: Applies Terraform configuration
+    dir: "{{.INFRA_DIR}}"
+    cmds:
+    - terraform apply -auto-approve -var "location={{.REGION}}" -compact-warnings
+    vars:
+      REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  plan:
+    desc: Shows Terraform execution plan
+    dir: "{{.INFRA_DIR}}"
+    cmds:
+    - terraform plan -var "location={{.REGION}}" -compact-warnings
+    vars:
+      REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  down:
+    desc: Destroys all Azure resources and cleans up Terraform
+    dir: "{{.INFRA_DIR}}"
+    cmds:
+    - az group delete -n {{.RG}} --yes --no-wait || true
+    - powershell -Command "Remove-Item -Recurse -Force terraform.tfstate.d, .terraform.lock.hcl, .terraform, terraform.tfstate, terraform.tfstate.backup, .terraform.tfstate.lock.info -ErrorAction SilentlyContinue"
+    vars:
+      RG:
+        sh: terraform output -raw resource_group_name
+
+  deploy:
+    desc: Builds and deploys the application (build + token replacement instructions)
+    cmds:
+    - task: build
+    - echo "Build complete. Deploy publish/ folder to IIS on the VM."
+    - echo "Replace tokens in web.config - #{DatabaseServer}#, #{DatabaseName}#, #{DatabaseUser}#, #{DatabasePassword}#"
