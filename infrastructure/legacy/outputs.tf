@@ -18,6 +18,18 @@ output "vm_admin_username" {
   value       = var.admin_username
 }
 
+output "vm_admin_password" {
+  description = "VM administrator password (generated)"
+  value       = random_password.admin.result
+  sensitive   = true
+}
+
+output "sql_sa_password" {
+  description = "SQL Server SA password (generated)"
+  value       = random_password.sql.result
+  sensitive   = true
+}
+
 output "iis_url" {
   description = "URL to access the IIS-hosted application"
   value       = "http://${azurerm_public_ip.this.ip_address}"

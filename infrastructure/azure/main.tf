@@ -7,10 +7,17 @@ resource "random_pet" "this" {
   separator = ""
 }
 
+resource "random_password" "sql" {
+  length  = 16
+  special = true
+}
+
 locals {
-  location      = var.region
+  location      = var.location
   resource_name = "${random_pet.this.id}-${random_id.this.dec}"
   home_network  = "${chomp(data.http.myip.response_body)}/32"
+  sql_sku       = "S0"
+  app_plan_sku  = "S1"
   # Sanitize for resources that don't allow hyphens
   storage_name = replace(lower(local.resource_name), "-", "")
 }
@@ -33,7 +40,7 @@ resource "azurerm_service_plan" "this" {
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
   os_type             = "Windows"
-  sku_name            = "S1"
+  sku_name            = local.app_plan_sku
 
   tags = {
     Application = var.tags
@@ -75,7 +82,7 @@ resource "azurerm_windows_web_app" "this" {
   connection_string {
     name  = "PropertyManager"
     type  = "SQLAzure"
-    value = "Server=tcp:${azurerm_mssql_server.this.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.this.name};Persist Security Info=False;User ID=${var.sql_admin_username};Password=${var.sql_admin_password};MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+    value = "Server=tcp:${azurerm_mssql_server.this.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.this.name};Persist Security Info=False;User ID=${var.sql_admin_username};Password=${random_password.sql.result};MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   }
 
   identity {
@@ -91,7 +98,7 @@ resource "azurerm_mssql_server" "this" {
   location                     = azurerm_resource_group.this.location
   version                      = "12.0"
   administrator_login          = var.sql_admin_username
-  administrator_login_password = var.sql_admin_password
+  administrator_login_password = random_password.sql.result
   minimum_tls_version          = "1.2"
 
   tags = {
@@ -104,7 +111,7 @@ resource "azurerm_mssql_database" "this" {
   name        = "PropertyManager"
   server_id   = azurerm_mssql_server.this.id
   collation   = "SQL_Latin1_General_CP1_CI_AS"
-  sku_name    = var.sql_sku
+  sku_name    = local.sql_sku
   max_size_gb = 2
 
   tags = {

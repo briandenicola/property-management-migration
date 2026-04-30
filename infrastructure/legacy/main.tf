@@ -12,9 +12,20 @@ resource "random_integer" "vnet_cidr" {
   max = 250
 }
 
+resource "random_password" "sql" {
+  length  = 16
+  special = true
+}
+
+resource "random_password" "admin" {
+  length  = 16
+  special = true
+}
+
 locals {
-  location             = var.region
+  location             = var.location
   resource_name        = "${random_pet.this.id}-${random_id.this.dec}"
+  vm_size              = "Standard_B2ms"
   vnet_cidr            = cidrsubnet("10.0.0.0/8", 8, random_integer.vnet_cidr.result)
   pe_subnet_cidir      = cidrsubnet(local.vnet_cidr, 8, 1)
   compute_subnet_cidir = cidrsubnet(local.vnet_cidr, 8, 2)
@@ -142,9 +153,9 @@ resource "azurerm_windows_virtual_machine" "this" {
   name                = "${local.resource_name}-vm"
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
-  size                = var.vm_size
+  size                = local.vm_size
   admin_username      = var.admin_username
-  admin_password      = var.admin_password
+  admin_password      = random_password.admin.result
 
   tags = {
     Application = var.tags
@@ -209,7 +220,7 @@ resource "azurerm_virtual_machine_extension" "setup" {
 
   settings = <<SETTINGS
     {
-      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File setup-legacy-server.ps1 -SqlSaPassword '${var.sql_sa_password}' -AdminUsername '${var.admin_username}'"
+      "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File setup-legacy-server.ps1 -SqlSaPassword '${random_password.sql.result}' -AdminUsername '${var.admin_username}'"
     }
 SETTINGS
 

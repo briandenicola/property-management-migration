@@ -18,9 +18,15 @@ output "sql_server_fqdn" {
   value       = azurerm_mssql_server.this.fully_qualified_domain_name
 }
 
+output "sql_admin_password" {
+  description = "Azure SQL administrator password (generated)"
+  value       = random_password.sql.result
+  sensitive   = true
+}
+
 output "sql_connection_string" {
   description = "Connection string for the PropertyManager database"
-  value       = "Server=tcp:${azurerm_mssql_server.this.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.this.name};Persist Security Info=False;User ID=${var.sql_admin_username};Password=${var.sql_admin_password};MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+  value       = "Server=tcp:${azurerm_mssql_server.this.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.this.name};Persist Security Info=False;User ID=${var.sql_admin_username};Password=${random_password.sql.result};MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   sensitive   = true
 }
 
