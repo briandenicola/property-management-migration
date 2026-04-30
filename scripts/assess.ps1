@@ -306,7 +306,7 @@ Write-Host ""
 Write-Host "  Next steps for demo:" -ForegroundColor Yellow
 Write-Host "    1. Open Azure Portal → Azure Migrate → $MigrateProjectName" -ForegroundColor White
 Write-Host "    2. Install App Service Migration Assistant on VM at $vmIp" -ForegroundColor White
-Write-Host "    3. Run .\scripts\demo\migrate.ps1 -DryRun to verify build" -ForegroundColor White
+Write-Host "    3. Run .\scripts\migrate.ps1 -DryRun to verify build" -ForegroundColor White
 Write-Host ""
 Write-Success "Day-before assessment complete. You are demo-ready."
 

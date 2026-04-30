@@ -6,6 +6,8 @@
 **Presenter:** Brian  
 **Last Updated:** 2026-04-30T17:33:47.227Z
 
+> **Note:** This guide uses our manual scripted approach to migration. For context on why we use scripts instead of Microsoft's official App Service Migration Assistant (ASMA), and when to recommend ASMA to clients, see [talking-points.md — "Our Approach vs. ASMA"](talking-points.md#our-approach-vs-app-service-migration-assistant-asma).
+
 ---
 
 ## Prerequisites
@@ -23,18 +25,18 @@
 | Legacy VM + IIS | `task legacy:creds` → RDP in, browse to `iis_url` |
 | App Service (target) | `task azure:up` has been run |
 | Azure SQL | `terraform output -raw sql_server_fqdn` (from `infrastructure/azure/`) |
-| Azure Migrate project | Created by `scripts/demo/assess.ps1` the day before |
+| Azure Migrate project | Created by `scripts/assess.ps1` the day before |
 
 ### Day-Before Prep Checklist
 - [ ] Run `task legacy:up` — confirm VM is running and IIS app is live
 - [ ] Run `task azure:up` — confirm App Service, SQL, and Storage are provisioned
-- [ ] Run `scripts/demo/assess.ps1` — creates Azure Migrate project and pre-stages assessment
+- [ ] Run `scripts/assess.ps1` — creates Azure Migrate project and pre-stages assessment
 - [ ] Open Azure Portal and navigate to Azure Migrate project — verify assessment shows results
 - [ ] RDP into legacy VM once to confirm app loads at `http://<vm-ip>/`
 - [ ] Pre-open two browser tabs: (1) legacy IIS URL, (2) Azure Migrate portal blade
-- [ ] Run `scripts/demo/migrate.ps1 -DryRun` — confirm build succeeds without deploying
-- [ ] Run `scripts/demo/validate.ps1 -LegacyUrl http://<vm-ip>` — confirm legacy baseline metrics
-- [ ] Print or screen-share `scripts/demo/compare.ps1` output as backup talking points
+- [ ] Run `scripts/migrate.ps1 -DryRun` — confirm build succeeds without deploying
+- [ ] Run `scripts/validate.ps1 -LegacyUrl http://<vm-ip>` — confirm legacy baseline metrics
+- [ ] Print or screen-share `scripts/compare.ps1` output as backup talking points
 - [ ] Charge laptop, disable screen lock, close Slack/Teams notifications
 
 ---
@@ -104,7 +106,7 @@ Navigate to: `portal.azure.com` → search "Azure Migrate" → open project `pro
 - "Azure Migrate is Microsoft's free assessment and migration platform. We ran discovery against the VM last night — it's been cataloguing the app, dependencies, and sizing."
 - "This isn't guesswork. It's fingerprinting: OS, IIS bindings, .NET version, application pool config, connection strings."
 
-**Fallback:** If portal is slow → open `scripts/demo/assess.ps1` output JSON from previous run.
+**Fallback:** If portal is slow → open `scripts/assess.ps1` output JSON from previous run.
 
 ---
 
@@ -126,7 +128,7 @@ Navigate to: `portal.azure.com` → search "Azure Migrate" → open project `pro
 - "What Azure Migrate is doing here is reading the IIS metabase directly — app pool identity, CLR version, managed pipeline mode — and mapping it to an App Service equivalent configuration."
 - "The key finding: this app is a clean lift. No GAC dependencies, no COM objects, no custom ISAPI filters."
 
-**Fallback:** If assessment data is incomplete → use `scripts/demo/compare.ps1` output to narrate the comparison manually.
+**Fallback:** If assessment data is incomplete → use `scripts/compare.ps1` output to narrate the comparison manually.
 
 ---
 
@@ -190,7 +192,7 @@ $rg  = terraform -chdir=infrastructure/azure output -raw resource_group_name
 $app = terraform -chdir=infrastructure/azure output -raw app_service_name
 
 # Run the fallback migration
-.\scripts\demo\migrate.ps1 -ResourceGroup $rg -AppServiceName $app
+.\scripts\migrate.ps1 -ResourceGroup $rg -AppServiceName $app
 ```
 
 **Talking points:**
@@ -217,7 +219,7 @@ Start-Process $url
 - "HTTPS by default. Managed certificate. No certificate renewal task on your calendar ever again."
 - "Custom domain? Two DNS records and you're done."
 
-**Fallback:** If app returns 500 on first load → run `.\scripts\demo\validate.ps1` to triage. Common cause: connection string not yet set. See `migrate.ps1` output.
+**Fallback:** If app returns 500 on first load → run `.\scripts\validate.ps1` to triage. Common cause: connection string not yet set. See `migrate.ps1` output.
 
 ---
 
@@ -242,7 +244,7 @@ Navigate through these portal blades for the App Service:
 **Action:**
 
 ```powershell
-.\scripts\demo\compare.ps1 -LegacyVmSize "Standard_B2ms" -AppServiceSku "S1"
+.\scripts\compare.ps1 -LegacyVmSize "Standard_B2ms" -AppServiceSku "S1"
 ```
 
 **Walk through output:**
@@ -270,9 +272,9 @@ Navigate through these portal blades for the App Service:
 ## Emergency Procedures
 
 ### App won't load on App Service
-1. Check `.\scripts\demo\validate.ps1` output — pinpoints connection/config issues
+1. Check `.\scripts\validate.ps1` output — pinpoints connection/config issues
 2. Check App Service → Log stream in portal
-3. If connection string missing: re-run `.\scripts\demo\migrate.ps1 -ConnectionStringOnly`
+3. If connection string missing: re-run `.\scripts\migrate.ps1 -ConnectionStringOnly`
 4. Nuclear option: `az webapp restart --name <app> --resource-group <rg>`
 
 ### Legacy VM unreachable
@@ -282,7 +284,7 @@ Navigate through these portal blades for the App Service:
 
 ### Azure Portal slow / down
 1. Use Azure CLI for all outputs: `az webapp show`, `az monitor app-insights`
-2. Run `.\scripts\demo\compare.ps1` for numbers
+2. Run `.\scripts\compare.ps1` for numbers
 3. Show Application Insights → Azure Monitor in portal (different URL: `monitor.azure.com`)
 
 ### Build fails in migrate.ps1
@@ -290,5 +292,5 @@ Navigate through these portal blades for the App Service:
 2. Run `task restore` first: NuGet packages might need restoring
 3. Check `.\publish\` — if it exists from a prior run, zip-deploy can use it directly:
    ```powershell
-   .\scripts\demo\migrate.ps1 -SkipBuild
+   .\scripts\migrate.ps1 -SkipBuild
    ```

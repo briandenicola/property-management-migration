@@ -2,6 +2,26 @@
 
 ## Learnings
 
+### 2026-04-30T18:50:46Z — BACPAC Database Migration Step in migrate.ps1
+
+Added Step 4 (Database Migration) to `scripts/migrate.ps1` between Package and Deploy. Steps renumbered: Package(3) → BACPAC(4) → Deploy(5) → ConnStr(6) → Verify(7).
+
+**What was added:**
+- `Find-SqlPackage` helper function — searches PATH, Program Files (x86 and x64) glob patterns, and dotnet global tools directory. Falls back to `dotnet tool install -g microsoft.sqlpackage` if not found.
+- Export phase: Uses SqlPackage.exe `/Action:Export` against local `.\SQLEXPRESS` with Windows auth, source database `PropertyManager`, outputs `.bacpac` to `publish/` directory.
+- Import phase: Uses SqlPackage.exe `/Action:Import` with `/AccessToken` parameter (Entra ID token from `az account get-access-token --resource https://database.windows.net`). NO SQL username/password on the import side — subscription policy enforces Entra ID-only auth.
+- Added `sql_database_name` output to `infrastructure/azure/outputs.tf` (was missing; `sql_server_fqdn` already existed).
+
+**Key constraints:**
+- Azure subscription policy: NO key-based auth on storage, SQL must use Entra ID-only auth
+- Import target resolved from Terraform outputs: `sql_server_fqdn` and `sql_database_name`
+- Export source uses Windows Integrated Auth (no credentials needed for local SQL Express)
+- Pattern: same Write-Header/Write-Step/Write-Success/Write-Fail formatting, same error handling (`exit 1` on failure)
+
+**File paths modified:**
+- `scripts/migrate.ps1` — new Step 4 (BACPAC migration), renumbered Steps 5–7
+- `infrastructure/azure/outputs.tf` — added `sql_database_name` output
+
 ### 2026-04-30T17:33:47Z — Azure Migrate Demo IP Package
 
 Created the full Azure Migrate demo intellectual property package — 6 files covering the complete "IIS VM → App Service" demo workflow.
@@ -10,10 +30,10 @@ Created the full Azure Migrate demo intellectual property package — 6 files co
 
 - `docs/demo-guide.md` — Narrated step-by-step demo script with timing marks (18 min total across 4 acts), exact commands/clicks, inline talking points, day-before prep checklist, and fallback procedures at every step.
 - `docs/talking-points.md` — Client-facing value propositions (eliminate toil, pay-per-use, monitoring, SLA, security), before/after comparison table, TCO discussion (VM true cost vs App Service), common objections + responses, and 30-second elevator pitch.
-- `scripts/demo/assess.ps1` — Day-before assessment automation: logs in, resolves legacy VM from Terraform outputs, creates/reuses Azure Migrate project, installs `az migrate` extension if needed, generates assessment metadata JSON, exports report to `docs/assessment-report.json`.
-- `scripts/demo/migrate.ps1` — Fallback migration pipeline: NuGet restore → MSBuild compile → MSBuild publish → zip package → `az webapp deploy` (zip deploy) → connection string update → restart → health check. Supports `-DryRun`, `-SkipBuild`, and `-ConnectionStringOnly` modes.
-- `scripts/demo/validate.ps1` — Post-migration validation suite: HTTP health (root URL), API endpoint, DB connectivity (via API response), Blob Storage access (attachment endpoint), response time comparison (legacy vs modern, 3 samples), and feature smoke test (create + read-back property). Passes/Fails/Warns with summary table.
-- `scripts/demo/compare.ps1` — Before/after comparison report: itemized monthly cost breakdown (compute, DB, storage, backup, monitoring, SSL, ops labor), feature comparison table (20+ dimensions), SLA comparison, and optional JSON export. All prices are Canada Central retail estimates with disclaimer.
+- `scripts/assess.ps1` — Day-before assessment automation: logs in, resolves legacy VM from Terraform outputs, creates/reuses Azure Migrate project, installs `az migrate` extension if needed, generates assessment metadata JSON, exports report to `docs/assessment-report.json`.
+- `scripts/migrate.ps1` — Fallback migration pipeline: NuGet restore → MSBuild compile → MSBuild publish → zip package → `az webapp deploy` (zip deploy) → connection string update → restart → health check. Supports `-DryRun`, `-SkipBuild`, and `-ConnectionStringOnly` modes.
+- `scripts/validate.ps1` — Post-migration validation suite: HTTP health (root URL), API endpoint, DB connectivity (via API response), Blob Storage access (attachment endpoint), response time comparison (legacy vs modern, 3 samples), and feature smoke test (create + read-back property). Passes/Fails/Warns with summary table.
+- `scripts/compare.ps1` — Before/after comparison report: itemized monthly cost breakdown (compute, DB, storage, backup, monitoring, SSL, ops labor), feature comparison table (20+ dimensions), SLA comparison, and optional JSON export. All prices are Canada Central retail estimates with disclaimer.
 
 **Key design decisions:**
 - All scripts auto-detect Terraform outputs (resource group, App Service name, SQL connection string) from `infrastructure/azure/` — no hardcoded names

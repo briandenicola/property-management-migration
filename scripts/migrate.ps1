@@ -10,9 +10,11 @@
       2. Builds the solution in Release configuration (MSBuild)
       3. Publishes the web project to a temp directory
       4. Creates a deployment zip package
-      5. Deploys via 'az webapp deploy' (zip deploy)
-      6. Updates App Service connection strings from Terraform outputs
-      7. Verifies the deployment is healthy
+      5. Exports the legacy SQL Express database to BACPAC
+      6. Imports the BACPAC into Azure SQL (using Entra ID access token)
+      7. Deploys via 'az webapp deploy' (zip deploy)
+      8. Updates App Service connection strings from Terraform outputs
+      9. Verifies the deployment is healthy
 
     Use -SkipBuild if a prior build artifact exists in .\publish\.
     Use -DryRun to validate the build succeeds without deploying.
@@ -131,6 +133,28 @@ function Invoke-AzCli {
     $result = az @CliArgs 2>&1
     if ($LASTEXITCODE -ne 0) { throw "az $($CliArgs -join ' ') failed:`n$result" }
     return $result
+}
+
+function Find-SqlPackage {
+    # Check if already on PATH
+    $onPath = Get-Command "SqlPackage.exe" -ErrorAction SilentlyContinue
+    if ($onPath) { return $onPath.Source }
+
+    # Check common install locations (newest version first)
+    $searchPaths = @(
+        "C:\Program Files\Microsoft SQL Server\*\DAC\bin\SqlPackage.exe",
+        "C:\Program Files (x86)\Microsoft SQL Server\*\DAC\bin\SqlPackage.exe"
+    )
+    foreach ($pattern in $searchPaths) {
+        $found = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
+        if ($found) { return $found.FullName }
+    }
+
+    # Check dotnet global tools
+    $dotnetToolPath = Join-Path $env:USERPROFILE ".dotnet\tools\SqlPackage.exe"
+    if (Test-Path $dotnetToolPath) { return $dotnetToolPath }
+
+    return $null
 }
 
 #endregion
@@ -308,8 +332,103 @@ Compress-Archive -Path "$PublishDir\*" -DestinationPath $ZipPath -Force
 $zipSizeMb = [math]::Round((Get-Item $ZipPath).Length / 1MB, 1)
 Write-Success "Zip created: $ZipPath ($zipSizeMb MB)"
 
-# --- Step 4: Deploy ---
-Write-Header "Step 4 — Zip Deploy"
+# --- Step 4: Database Migration (BACPAC) ---
+Write-Header "Step 4 — Database Migration (BACPAC)"
+
+# Locate SqlPackage.exe
+Write-Step "Locating SqlPackage.exe..."
+$SqlPackagePath = Find-SqlPackage
+if (-not $SqlPackagePath) {
+    Write-Warn "SqlPackage.exe not found. Attempting install via dotnet tool..."
+    $installResult = dotnet tool install -g microsoft.sqlpackage 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Fail "Failed to install SqlPackage via dotnet tool: $installResult"
+        Write-Fail "Install manually: https://learn.microsoft.com/sql/tools/sqlpackage-download"
+        exit 1
+    }
+    $SqlPackagePath = Find-SqlPackage
+    if (-not $SqlPackagePath) {
+        Write-Fail "SqlPackage.exe still not found after install. Check your PATH."
+        exit 1
+    }
+}
+Write-Success "SqlPackage found: $SqlPackagePath"
+
+# Resolve Azure SQL target from Terraform
+Write-Step "Resolving Azure SQL target from Terraform outputs..."
+$SqlServerFqdn = Get-TerraformOutput -Name "sql_server_fqdn"
+if (-not $SqlServerFqdn) {
+    Write-Fail "Cannot detect SQL server FQDN from Terraform. Ensure 'task azure:up' has been run."
+    exit 1
+}
+Write-Success "Target SQL Server: $SqlServerFqdn"
+
+$SqlDatabaseName = Get-TerraformOutput -Name "sql_database_name"
+if (-not $SqlDatabaseName) {
+    Write-Fail "Cannot detect SQL database name from Terraform. Ensure 'task azure:up' has been run."
+    exit 1
+}
+Write-Success "Target Database: $SqlDatabaseName"
+
+# Export from local SQL Express
+$BacpacPath = Join-Path $PublishDir "PropertyManager.bacpac"
+Write-Step "Exporting local database to BACPAC..."
+Write-Host "  Source: .\SQLEXPRESS / PropertyManager" -ForegroundColor DarkGray
+Write-Host "  Output: $BacpacPath" -ForegroundColor DarkGray
+
+if (Test-Path $BacpacPath) { Remove-Item $BacpacPath -Force }
+
+$exportArgs = @(
+    "/Action:Export",
+    "/SourceServerName:.\SQLEXPRESS",
+    "/SourceDatabaseName:PropertyManager",
+    "/TargetFile:$BacpacPath"
+)
+& $SqlPackagePath @exportArgs
+if ($LASTEXITCODE -ne 0) {
+    Write-Fail "BACPAC export failed (exit code $LASTEXITCODE)."
+    exit 1
+}
+
+if (-not (Test-Path $BacpacPath)) {
+    Write-Fail "BACPAC file not found after export: $BacpacPath"
+    exit 1
+}
+$bacpacSizeMb = [math]::Round((Get-Item $BacpacPath).Length / 1MB, 1)
+Write-Success "BACPAC exported: $BacpacPath ($bacpacSizeMb MB)"
+
+# Get Entra ID access token for Azure SQL
+Write-Step "Acquiring Entra ID access token for Azure SQL..."
+$AccessToken = az account get-access-token --resource https://database.windows.net --query accessToken -o tsv
+if ($LASTEXITCODE -ne 0 -or -not $AccessToken) {
+    Write-Fail "Failed to acquire Entra ID access token for Azure SQL."
+    Write-Fail "Ensure you are logged in with 'az login' and have permissions on the target database."
+    exit 1
+}
+Write-Success "Access token acquired."
+
+# Import BACPAC into Azure SQL
+Write-Step "Importing BACPAC into Azure SQL..."
+Write-Host "  Target: $SqlServerFqdn / $SqlDatabaseName" -ForegroundColor DarkGray
+Write-Host "  (This typically takes 1–5 minutes depending on database size)" -ForegroundColor DarkGray
+
+$importArgs = @(
+    "/Action:Import",
+    "/SourceFile:$BacpacPath",
+    "/TargetServerName:tcp:$SqlServerFqdn,1433",
+    "/TargetDatabaseName:$SqlDatabaseName",
+    "/AccessToken:$AccessToken"
+)
+& $SqlPackagePath @importArgs
+if ($LASTEXITCODE -ne 0) {
+    Write-Fail "BACPAC import failed (exit code $LASTEXITCODE)."
+    Write-Fail "Check that the Azure SQL firewall allows your IP and the database is empty."
+    exit 1
+}
+Write-Success "Database imported successfully into Azure SQL."
+
+# --- Step 5: Deploy ---
+Write-Header "Step 5 — Zip Deploy"
 Write-Step "Deploying to $AppServiceName in $ResourceGroup..."
 Write-Host "  (This typically takes 30–90 seconds)" -ForegroundColor DarkGray
 
@@ -324,8 +443,8 @@ Invoke-AzCli @(
 )
 Write-Success "Zip deploy complete."
 
-# --- Step 5: Update Connection String ---
-Write-Header "Step 5 — Connection String"
+# --- Step 6: Update Connection String ---
+Write-Header "Step 6 — Connection String"
 Write-Step "Reading SQL connection string from Terraform..."
 $connStr = Get-TerraformOutput -Name "sql_connection_string"
 if ($connStr) {
@@ -344,8 +463,8 @@ if ($connStr) {
     Write-Warn "Set it manually: az webapp config connection-string set ..."
 }
 
-# --- Step 6: Restart & Verify ---
-Write-Header "Step 6 — Restart and Health Check"
+# --- Step 7: Restart & Verify ---
+Write-Header "Step 7 — Restart and Health Check"
 Write-Step "Restarting App Service to apply configuration..."
 Invoke-AzCli @(
     "webapp", "restart",
@@ -368,7 +487,7 @@ try {
     }
 } catch {
     Write-Warn "Health check request failed: $_"
-    Write-Warn "App may still be warming up. Run .\scripts\demo\validate.ps1 to check."
+    Write-Warn "App may still be warming up. Run .\scripts\validate.ps1 to check."
 }
 
 # --- Summary ---
@@ -379,8 +498,8 @@ Write-Host "  Resource Group : $ResourceGroup" -ForegroundColor Cyan
 Write-Host "  App Service    : $AppServiceName" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Next steps:" -ForegroundColor Yellow
-Write-Host "    - Run .\scripts\demo\validate.ps1 for full validation" -ForegroundColor White
-Write-Host "    - Run .\scripts\demo\compare.ps1 for cost comparison" -ForegroundColor White
+Write-Host "    - Run .\scripts\validate.ps1 for full validation" -ForegroundColor White
+Write-Host "    - Run .\scripts\compare.ps1 for cost comparison" -ForegroundColor White
 Write-Host "    - Open Azure Portal → $AppServiceName → Application Insights" -ForegroundColor White
 Write-Host ""
 Write-Success "Deployment pipeline complete."
