@@ -2,7 +2,7 @@ version: '3'
 
 env:
   APP_TITLE: "Property Manager Legacy"
-  DEFAULT_REGION: "eastus"
+  DEFAULT_REGION: "canadacentral"
   MSBUILD: "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe"
   SOLUTION_DIR: "{{.ROOT_DIR}}\\src"
   SOLUTION_FILE: "{{.ROOT_DIR}}\\src\\PropertyManager.sln"
@@ -51,7 +51,8 @@ tasks:
   publish:
     desc: Publishes the web project to the publish/ folder
     cmds:
-    - '"{{.MSBUILD}}" "{{.WEB_PROJECT}}" /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FileSystem /p:publishUrl={{.PUBLISH_DIR}} /p:DeleteExistingFiles=true /verbosity:minimal /nologo /m'
+    - '"{{.MSBUILD}}" "{{.WEB_PROJECT}}" /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /verbosity:minimal /nologo /m'
+    - powershell -Command "Copy-Item '{{.SOLUTION_DIR}}\PropertyManager.Web\obj\Release\Package\PackageTmp\*' '{{.PUBLISH_DIR}}' -Recurse -Force"
 
   deploy:
     desc: Builds and deploys the application (build + token replacement instructions)
