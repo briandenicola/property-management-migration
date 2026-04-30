@@ -27,9 +27,10 @@ resource "azurerm_resource_group" "this" {
   location = local.location
 
   tags = {
-    Application = var.tags
-    Components  = "App Service; Azure SQL; Blob Storage;"
-    DeployedOn  = timestamp()
+    Application      = var.tags
+    Components       = "App Service; Azure SQL; Blob Storage;"
+    DeployedOn       = timestamp()
+    SecurityControl  = "Ignore"
   }
 }
 
@@ -74,7 +75,7 @@ resource "azurerm_windows_web_app" "this" {
     "APPINSIGHTS_INSTRUMENTATIONKEY"             = azurerm_application_insights.this.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING"      = azurerm_application_insights.this.connection_string
     "ApplicationInsightsAgent_EXTENSION_VERSION" = "~2"
-    "BlobStorage__ConnectionString"              = azurerm_storage_account.this.primary_connection_string
+    "BlobStorage__ServiceUri"                    = azurerm_storage_account.this.primary_blob_endpoint
     "BlobStorage__ContainerName"                 = azurerm_storage_container.attachments.name
     "MaxFileSizeBytes"                           = "26214400"
   }
@@ -139,12 +140,13 @@ resource "azurerm_mssql_firewall_rule" "allow_home" {
 # --- Azure Blob Storage ---
 
 resource "azurerm_storage_account" "this" {
-  name                     = "${local.storage_name}stor"
-  resource_group_name      = azurerm_resource_group.this.name
-  location                 = azurerm_resource_group.this.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  min_tls_version          = "TLS1_2"
+  name                      = "${local.storage_name}stor"
+  resource_group_name       = azurerm_resource_group.this.name
+  location                  = azurerm_resource_group.this.location
+  account_tier              = "Standard"
+  account_replication_type  = "LRS"
+  min_tls_version           = "TLS1_2"
+  shared_access_key_enabled = false
 
   tags = {
     Application = var.tags
@@ -166,6 +168,13 @@ resource "azurerm_storage_container" "attachments" {
   name                  = "attachments"
   storage_account_name  = azurerm_storage_account.this.name
   container_access_type = "private"
+}
+
+# Grant App Service managed identity access to blob storage
+resource "azurerm_role_assignment" "app_storage_blob" {
+  scope                = azurerm_storage_account.this.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_windows_web_app.this.identity[0].principal_id
 }
 
 # --- Application Insights ---

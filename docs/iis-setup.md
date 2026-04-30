@@ -1,9 +1,10 @@
-# IIS Setup Guide — PropertyPro
+# IIS Setup Guide — PropertyManager
 
-> **Platform:** Windows Server 2012 R2 · IIS 8.5 · .NET Framework 4.6.1  
-> **App:** PropertyPro Web API 2 + AngularJS SPA  
-> **Deployment style:** xcopy / robocopy (no MSDeploy required)  
-> **Last updated:** 2026-04-29
+> **Platform:** Windows Server 2016 · IIS 10.0 · .NET Framework 4.6.2  
+> **App:** PropertyManager Web API 2 + AngularJS SPA  
+> **Deployment style:** Web Deploy or xcopy / robocopy  
+> **Auto-provisioned by:** Terraform Custom Script Extension  
+> **Last updated:** 2026-04-30
 
 ---
 
