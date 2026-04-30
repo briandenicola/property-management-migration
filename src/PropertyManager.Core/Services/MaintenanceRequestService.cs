@@ -74,6 +74,7 @@ namespace PropertyManager.Core.Services
                 return false;
             }
 
+            var previousStatus = existing.Status;
             existing.Status = status;
             existing.UpdatedDate = DateTime.Now;
 
@@ -83,6 +84,17 @@ namespace PropertyManager.Core.Services
             }
 
             _requestRepository.Update(existing);
+
+            var history = new MaintenanceStatusHistory
+            {
+                MaintenanceRequestId = id,
+                FromStatus = previousStatus,
+                ToStatus = status,
+                ChangedBy = "System",
+                ChangedOn = DateTime.Now
+            };
+            _context.Set<MaintenanceStatusHistory>().Add(history);
+
             _requestRepository.Save();
             return true;
         }

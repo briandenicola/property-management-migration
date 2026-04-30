@@ -47,6 +47,7 @@ namespace PropertyManager.Data.Repositories
                 .Include(m => m.Property)
                 .Include(m => m.Tenant)
                 .Include(m => m.Attachments)
+                .Include(m => m.StatusHistories)
                 .FirstOrDefault(m => m.Id == id);
         }
 

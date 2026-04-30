@@ -64,7 +64,7 @@
                     <td>{{request.propertyName}}</td>
                     <td>{{request.tenantName}}</td>
                     <td><span class="label label-default">{{request.priority}}</span></td>
-                    <td><span class="label" ng-class="{'label-warning': request.status === 'Open','label-info': request.status === 'InProgress','label-success': request.status === 'Completed','label-default': request.status === 'Closed'}">{{request.status}}</span></td>
+                    <td><span class="label" ng-class="{'label-warning': request.statusName === 'Open','label-info': request.statusName === 'InProgress','label-success': request.statusName === 'Completed','label-default': request.statusName === 'Closed'}">{{request.statusName}}</span></td>
                     <td>{{request.createdDate | date:'short'}}</td>
                 </tr>
                 <tr ng-if="!vm.requests.length && !vm.loading">

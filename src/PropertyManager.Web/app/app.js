@@ -6,8 +6,8 @@
         .config(AppConfig)
         .run(AppRun);
 
-    AppConfig.$inject = ['$stateProvider', '$urlRouterProvider', '$httpProvider'];
-    function AppConfig($stateProvider, $urlRouterProvider, $httpProvider) {
+    AppConfig.$inject = ['$stateProvider', '$urlRouterProvider'];
+    function AppConfig($stateProvider, $urlRouterProvider) {
         $urlRouterProvider.otherwise('/dashboard');
 
         $stateProvider
@@ -61,35 +61,13 @@
                 controllerAs: 'vm'
             });
 
-        $httpProvider.interceptors.push('authInterceptor');
+        // authInterceptor disabled — backend auth (OWIN/ASP.NET Identity) has been removed
+        // $httpProvider.interceptors.push('authInterceptor');
     }
 
-    AppRun.$inject = ['$rootScope', '$state', 'authService'];
-    function AppRun($rootScope, $state, authService) {
+    AppRun.$inject = ['$rootScope'];
+    function AppRun($rootScope) {
         $rootScope.currentUser = null;
-
-        authService.getUserInfo().then(function (response) {
-            $rootScope.currentUser = response.data;
-            authService.markAuthenticated();
-        }).catch(function () {
-            $rootScope.currentUser = null;
-        });
-
-        $rootScope.$on('$stateChangeStart', function (event, toState, toParams) {
-            if (toState.publicPage) {
-                return;
-            }
-
-            if (!authService.isAuthenticated()) {
-                event.preventDefault();
-                authService.getUserInfo().then(function (response) {
-                    $rootScope.currentUser = response.data;
-                    authService.markAuthenticated();
-                    $state.go(toState.name, toParams);
-                }).catch(function () {
-                    $state.go('login');
-                });
-            }
-        });
+        // Auth guard disabled — backend auth (OWIN/ASP.NET Identity) has been removed
     }
 })();

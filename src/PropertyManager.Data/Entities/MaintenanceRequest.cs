@@ -9,6 +9,7 @@ namespace PropertyManager.Data.Entities
         public MaintenanceRequest()
         {
             Attachments = new HashSet<Attachment>();
+            StatusHistories = new HashSet<MaintenanceStatusHistory>();
             CreatedDate = DateTime.Now;
             Status = RequestStatus.Open;
             Priority = RequestPriority.Medium;
@@ -38,5 +39,6 @@ namespace PropertyManager.Data.Entities
         public virtual Property Property { get; set; }
         public virtual ApplicationUser AssignedTo { get; set; }
         public virtual ICollection<Attachment> Attachments { get; set; }
+        public virtual ICollection<MaintenanceStatusHistory> StatusHistories { get; set; }
     }
 }

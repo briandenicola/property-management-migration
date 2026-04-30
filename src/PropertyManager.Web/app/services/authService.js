@@ -2,8 +2,9 @@
     'use strict';
 
     angular.module('propertyManagerApp')
-        .factory('authService', authService)
-        .factory('authInterceptor', authInterceptor);
+        .factory('authService', authService);
+        // authInterceptor disabled — caused circular dep ($http <- authService <- authInterceptor <- $http)
+        // .factory('authInterceptor', authInterceptor);
 
     authService.$inject = ['$http', '$window'];
     function authService($http, $window) {
@@ -53,16 +54,17 @@
         }
     }
 
-    authInterceptor.$inject = ['authService'];
-    function authInterceptor(authService) {
-        return {
-            request: function (config) {
-                var token = authService.getToken();
-                if (token) {
-                    config.headers.Authorization = 'Bearer ' + token;
-                }
-                return config;
-            }
-        };
-    }
+    // authInterceptor disabled — backend auth (OWIN/ASP.NET Identity) has been removed
+    // authInterceptor.$inject = ['authService'];
+    // function authInterceptor(authService) {
+    //     return {
+    //         request: function (config) {
+    //             var token = authService.getToken();
+    //             if (token) {
+    //                 config.headers.Authorization = 'Bearer ' + token;
+    //             }
+    //             return config;
+    //         }
+    //     };
+    // }
 })();

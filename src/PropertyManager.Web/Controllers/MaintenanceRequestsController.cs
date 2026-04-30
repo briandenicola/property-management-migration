@@ -167,7 +167,19 @@ namespace PropertyManager.Web.Controllers
                         MaintenanceRequestId = a.MaintenanceRequestId,
                         UploadedDate = a.UploadedDate,
                         UploadedById = a.UploadedById
-                    }).ToList()
+                    }).ToList(),
+                StatusHistory = request.StatusHistories == null
+                    ? null
+                    : request.StatusHistories
+                        .OrderByDescending(h => h.ChangedOn)
+                        .Select(h => new StatusHistoryDto
+                        {
+                            Id = h.Id,
+                            FromStatus = h.FromStatus.ToString(),
+                            NewStatus = h.ToStatus.ToString(),
+                            ChangedBy = h.ChangedBy,
+                            ChangedOn = h.ChangedOn
+                        }).ToList()
             };
         }
     }

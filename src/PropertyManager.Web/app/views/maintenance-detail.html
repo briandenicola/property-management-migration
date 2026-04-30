@@ -14,7 +14,7 @@
         <div class="panel panel-default">
             <div class="panel-heading">
                 <strong>{{vm.request.title}}</strong>
-                <span class="label pull-right" ng-class="{'label-warning': vm.request.status === 'Open','label-info': vm.request.status === 'InProgress','label-success': vm.request.status === 'Completed','label-default': vm.request.status === 'Closed'}">{{vm.request.status}}</span>
+                <span class="label pull-right" ng-class="{'label-warning': vm.request.statusName === 'Open','label-info': vm.request.statusName === 'InProgress','label-success': vm.request.statusName === 'Completed','label-default': vm.request.statusName === 'Closed'}">{{vm.request.statusName}}</span>
             </div>
             <div class="panel-body">
                 <p>{{vm.request.description}}</p>
@@ -61,7 +61,7 @@
             <div class="panel-body">
                 <div class="btn-group-vertical btn-block">
                     <button type="button" class="btn btn-default" ng-repeat="status in vm.statuses" ng-click="vm.updateStatus(status)">
-                        Set {{status}}
+                        Set {{status.name}}
                     </button>
                 </div>
             </div>

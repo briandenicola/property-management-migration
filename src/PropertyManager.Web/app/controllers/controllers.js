@@ -118,15 +118,21 @@
         vm.attachments = [];
         vm.uploadMessage = '';
         vm.uploadProgress = 0;
-        vm.statuses = ['Open', 'InProgress', 'Completed', 'Closed'];
+        vm.statuses = [
+            { name: 'Open', value: 0 },
+            { name: 'InProgress', value: 1 },
+            { name: 'Completed', value: 2 },
+            { name: 'Closed', value: 3 }
+        ];
         vm.statusHistory = [];
 
-        vm.updateStatus = function (status) {
-            maintenanceRequestService.updateStatus($stateParams.id, status).then(function () {
-                vm.request.status = status;
+        vm.updateStatus = function (statusObj) {
+            maintenanceRequestService.updateStatus($stateParams.id, statusObj.value).then(function () {
+                vm.request.status = statusObj.value;
+                vm.request.statusName = statusObj.name;
                 vm.statusHistory.unshift({
                     changedBy: 'Current User',
-                    newStatus: status,
+                    newStatus: statusObj.name,
                     changedOn: new Date()
                 });
             });

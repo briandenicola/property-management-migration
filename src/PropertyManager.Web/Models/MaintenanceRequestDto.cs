@@ -22,5 +22,15 @@ namespace PropertyManager.Web.Models
         public DateTime? CompletedDate { get; set; }
         public string Notes { get; set; }
         public IList<AttachmentDto> Attachments { get; set; }
+        public IList<StatusHistoryDto> StatusHistory { get; set; }
+    }
+
+    public class StatusHistoryDto
+    {
+        public int Id { get; set; }
+        public string FromStatus { get; set; }
+        public string NewStatus { get; set; }
+        public string ChangedBy { get; set; }
+        public DateTime ChangedOn { get; set; }
     }
 }
