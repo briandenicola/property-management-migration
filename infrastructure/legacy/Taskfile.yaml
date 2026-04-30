@@ -1,8 +1,5 @@
 version: '3'
 
-env:
-  DEFAULT_REGION: "eastus"
-
 tasks:
   up:
     desc: Creates the legacy infrastructure in Azure
@@ -32,6 +29,14 @@ tasks:
     - terraform plan -var "location={{.REGION}}" -compact-warnings
     vars:
       REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  creds:
+    desc: Shows SQL and VM credentials from Terraform output
+    cmds:
+    - terraform output -raw vm_admin_username
+    - terraform output -raw vm_admin_password
+    - terraform output -raw sql_sa_password
+    - terraform output -raw rdp_connection_string
 
   down:
     desc: Destroys all Azure resources and cleans up Terraform
