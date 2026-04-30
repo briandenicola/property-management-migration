@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>PropertyManager.Web</RootNamespace>
     <AssemblyName>PropertyManager.Web</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <UseIISExpress>true</UseIISExpress>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
