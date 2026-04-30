@@ -303,10 +303,23 @@ if ($DryRun) {
 Write-Header "Step 3 — Package"
 Write-Step "Creating deployment zip: $ZipPath..."
 
-if (Test-Path $ZipPath) { Remove-Item $ZipPath -Force }
+if (Test-Path $ZipPath) {
+    Remove-Item $ZipPath -Force
+    Start-Sleep -Milliseconds 500
+}
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::CreateFromDirectory($PublishDir, $ZipPath)
+$retries = 3
+for ($i = 1; $i -le $retries; $i++) {
+    try {
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($PublishDir, $ZipPath)
+        break
+    } catch {
+        if ($i -eq $retries) { throw }
+        Write-Host "  Zip file locked, retrying in 2s... ($i/$retries)" -ForegroundColor Yellow
+        Start-Sleep -Seconds 2
+    }
+}
 $zipSizeMb = [math]::Round((Get-Item $ZipPath).Length / 1MB, 1)
 Write-Success "Zip created: $ZipPath ($zipSizeMb MB)"
 
