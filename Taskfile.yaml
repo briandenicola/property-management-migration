@@ -8,7 +8,8 @@ env:
   SOLUTION_FILE: "{{.ROOT_DIR}}\\src\\PropertyManager.sln"
   WEB_PROJECT: "{{.ROOT_DIR}}\\src\\PropertyManager.Web\\PropertyManager.Web.csproj"
   PUBLISH_DIR: "{{.ROOT_DIR}}\\publish"
-  INFRA_DIR: "{{.ROOT_DIR}}\\infrastructure"
+  INFRA_DIR: "{{.ROOT_DIR}}\\infrastructure\\legacy"
+  INFRA_AZURE_DIR: "{{.ROOT_DIR}}\\infrastructure\\azure"
 
 tasks:
   default:
@@ -93,3 +94,46 @@ tasks:
     - task: build
     - echo "Build complete. Deploy publish/ folder to IIS on the VM."
     - echo "Replace tokens in web.config - #{DatabaseServer}#, #{DatabaseName}#, #{DatabaseUser}#, #{DatabasePassword}#"
+
+  up:azure:
+    desc: Creates the {{.APP_TITLE}} modern infrastructure (App Service + Azure SQL)
+    dir: "{{.INFRA_AZURE_DIR}}"
+    cmds:
+    - task: init:azure
+    - task: apply:azure
+
+  init:azure:
+    desc: Initializes Terraform for the Azure PaaS deployment
+    dir: "{{.INFRA_AZURE_DIR}}"
+    cmds:
+    - terraform workspace new {{.REGION}} || true
+    - terraform workspace select {{.REGION}}
+    - terraform init
+    vars:
+      REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  apply:azure:
+    desc: Applies Terraform configuration for the Azure PaaS deployment
+    dir: "{{.INFRA_AZURE_DIR}}"
+    cmds:
+    - terraform apply -auto-approve -var "location={{.REGION}}" -compact-warnings
+    vars:
+      REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  plan:azure:
+    desc: Shows Terraform execution plan for the Azure PaaS deployment
+    dir: "{{.INFRA_AZURE_DIR}}"
+    cmds:
+    - terraform plan -var "location={{.REGION}}" -compact-warnings
+    vars:
+      REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
+
+  down:azure:
+    desc: Destroys the Azure PaaS resources and cleans up Terraform
+    dir: "{{.INFRA_AZURE_DIR}}"
+    cmds:
+    - az group delete -n {{.RG}} --yes --no-wait || true
+    - powershell -Command "Remove-Item -Recurse -Force terraform.tfstate.d, .terraform.lock.hcl, .terraform, terraform.tfstate, terraform.tfstate.backup, .terraform.tfstate.lock.info -ErrorAction SilentlyContinue"
+    vars:
+      RG:
+        sh: terraform output -raw resource_group_name

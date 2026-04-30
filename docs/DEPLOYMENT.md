@@ -17,7 +17,7 @@ Deploy the PropertyManager .NET Framework 4.6.2 application to a Windows Server 
 
 ## 2. Infrastructure Provisioning
 
-The Terraform code in `infrastructure/` creates:
+The Terraform code in `infrastructure/legacy/` creates:
 
 | Resource | Purpose |
 |----------|---------|
@@ -32,7 +32,7 @@ The Terraform code in `infrastructure/` creates:
 
 ```bash
 # 1. Create your variables file
-cp infrastructure/terraform.tfvars.example infrastructure/terraform.tfvars
+cp infrastructure/legacy/terraform.tfvars.example infrastructure/legacy/terraform.tfvars
 # Edit terraform.tfvars — set strong passwords for vm_admin_password and sql_sa_password
 ```
 
@@ -57,7 +57,7 @@ Provisioning takes ~15–20 minutes (SQL Server Express download/install is the 
 After `task up` completes, note these values:
 
 ```bash
-cd infrastructure/
+cd infrastructure/legacy/
 terraform output vm_public_ip        # Static public IP
 terraform output vm_dns_name         # FQDN for the VM
 terraform output app_url             # http://<fqdn>
@@ -99,7 +99,7 @@ The `publish/` folder contains the complete IIS-deployable application.
 ### Option A: Web Deploy (Recommended)
 
 ```powershell
-$vmFqdn = terraform -chdir=infrastructure output -raw vm_dns_name
+$vmFqdn = terraform -chdir=infrastructure/legacy output -raw vm_dns_name
 
 msdeploy.exe `
   -verb:sync `
@@ -161,7 +161,7 @@ DROP DATABASE PropertyManagement;
 After deployment, verify the application is running:
 
 ```powershell
-$appUrl = terraform -chdir=infrastructure output -raw app_url
+$appUrl = terraform -chdir=infrastructure/legacy output -raw app_url
 
 # 1. Check the site responds
 Invoke-WebRequest -Uri $appUrl -UseBasicParsing | Select-Object StatusCode
@@ -186,7 +186,7 @@ Expected results:
 
 - Verify NSG rules in the Azure portal (HTTP 80, HTTPS 443, RDP 3389, Web Deploy 8172 must be allowed inbound).
 - On the VM, check Windows Firewall: `Get-NetFirewallRule | Where-Object { $_.Enabled -eq 'True' -and $_.Direction -eq 'Inbound' }`
-- The setup script creates firewall rules for ports 80, 443, 1433, and 8172. If they're missing, re-run the rules from `infrastructure/scripts/setup-iis-sql.ps1`.
+- The setup script creates firewall rules for ports 80, 443, 1433, and 8172. If they're missing, re-run the rules from `infrastructure/legacy/scripts/setup-legacy-server.ps1`.
 
 ### Connection string errors
 
