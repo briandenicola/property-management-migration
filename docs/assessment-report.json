@@ -1,0 +1,55 @@
+{
+  "subscriptionId": "ccfc5dda-43af-4b5e-8cc2-1dda18f2382e",
+  "generatedAt": "2026-04-30T13:07:45.7661645-05:00",
+  "webApps": [
+    {
+      "readiness": "Ready",
+      "physicalPath": "C:\\inetpub\\wwwroot\\PropertyManager",
+      "targetSku": "S1",
+      "clrVersion": "v4.0",
+      "siteName": "PropertyManager",
+      "framework": ".NET Framework 4.6.2",
+      "port": 80,
+      "appPool": "PropertyManager",
+      "recommendations": [
+        "Enable HTTPS redirect on App Service",
+        "Configure Application Insights instrumentation key",
+        "Set connection string via App Service Configuration (not web.config)",
+        "Enable Always On to prevent cold starts"
+      ],
+      "pipelineMode": "Integrated",
+      "protocol": "http",
+      "issues": []
+    }
+  ],
+  "migrateProject": {
+    "name": "property-mgmt-migrate",
+    "resourceGroup": "property-mgmt-migrate-rg",
+    "location": "canadacentral"
+  },
+  "costEstimate": {
+    "savingsNotes": "Net compute cost similar at S1; real savings from eliminated patching labor (est. 8 hrs/mo), no SQL Express license constraints, no VM backup overhead.",
+    "legacyMonthlyUsd": {
+      "total": 83.7,
+      "storage": 5.12,
+      "compute": 70.08,
+      "networking": 8.5,
+      "notes": "Standard_B2ms Windows VM, 64GB Premium SSD, 10GB egress"
+    },
+    "modernMonthlyUsd": {
+      "total": 91.48,
+      "storage": 2.3,
+      "notes": "S1 App Service Plan, S0 Azure SQL, LRS Blob Storage, App Insights free tier",
+      "sqlDatabase": 14.72,
+      "compute": 74.46,
+      "insights": 0.0
+    }
+  },
+  "source": {
+    "operatingSystem": "Windows Server 2016 Datacenter",
+    "publicIp": "4.205.208.194",
+    "resourceGroup": "walleye-63653_rg",
+    "vmSize": "Standard_B2ms",
+    "vmName": "walleye-63653-vm"
+  }
+}

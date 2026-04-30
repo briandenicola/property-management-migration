@@ -347,4 +347,7 @@ crash.log
 override.tf
 override.tf.json
 *_override.tf
-*_override.tf.json
+*_override.tf.json# Build artifacts
+src/PropertyManager.Web/_PublishedWebsites/
+src/PropertyManager.Web/UsersbrdenicoCodeproperty-management-migrationpublish/
+publish/
