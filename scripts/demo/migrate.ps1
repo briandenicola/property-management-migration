@@ -127,9 +127,9 @@ function Get-TerraformOutput {
 }
 
 function Invoke-AzCli {
-    param([string[]]$Args)
-    $result = az @Args 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "az $($Args -join ' ') failed:`n$result" }
+    param([string[]]$CliArgs)
+    $result = az @CliArgs 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "az $($CliArgs -join ' ') failed:`n$result" }
     return $result
 }
 
