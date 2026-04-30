@@ -54,3 +54,14 @@
 - Terraform infrastructure decisions now in Active Decisions
 - Legacy VM and PaaS target configurations available for reference
 - Infrastructure provisioning can be initiated independently before app deployment
+
+### 2026-04-30T17:25:43Z — Azure Migrate Demo Strategy
+- Researched Azure Migrate App Service migration path for IIS → App Service
+- Decision: Dual-track demo (Azure Migrate portal primary, scripted zip deploy fallback)
+- Azure Migrate uses appliance-based discovery + App Service Migration Assistant GUI/CLI
+- Migration Assistant takes ~5-10 min for simple .NET Framework apps
+- Prerequisites on source VM: .NET 4.5.2+, admin rights, outbound HTTPS (all satisfied)
+- Key insight: Azure Migrate discovery appliance needs network access to VM — our Terraform VM has public IP so this works
+- Fallback uses `az webapp deploy --src-path` with pre-built zip package
+- IP package: demo guide, assessment scripts, migration scripts, validation scripts, before/after dashboard
+- Terraform may need Azure Migrate project resource added
