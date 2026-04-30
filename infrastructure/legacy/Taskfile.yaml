@@ -33,10 +33,28 @@ tasks:
   creds:
     desc: Shows SQL and VM credentials from Terraform output
     cmds:
-    - terraform output -raw vm_admin_username
-    - terraform output -raw vm_admin_password
-    - terraform output -raw sql_sa_password
-    - terraform output -raw rdp_connection_string
+    - cmd: echo "{{.CONNECT_STRING}} /w:1024 /h:768 [username:{{.USERNAME}} password:{{.PASSWORD}}]"
+      silent: true
+    - cmd: echo "SQL Password:{{.SQL_PASSWORD}}"
+      silent: true      
+    vars:
+      USERNAME:
+        sh: terraform output -raw vm_admin_username
+      PASSWORD:
+        sh: terraform output -raw vm_admin_password
+      CONNECT_STRING:
+        sh: terraform output -raw rdp_connection_string
+      SQL_PASSWORD:
+        sh: terraform output -raw sql_sa_password
+
+  browse:
+    desc: Opens the deployed website in the default browser
+    cmds:
+    - cmd: powershell -Command "Start-Process 'http://{{.IP}}'"
+      silent: true
+    vars:
+      IP:
+        sh: terraform output -raw vm_public_ip
 
   down:
     desc: Destroys all Azure resources and cleans up Terraform
