@@ -46,8 +46,8 @@
             maintenanceRequestService.getAll({}).then(function (response) {
                 var rows = response.data || [];
                 vm.metrics.totalRequests = rows.length;
-                vm.metrics.openRequests = rows.filter(function (r) { return r.status === 'Open'; }).length;
-                vm.metrics.inProgressRequests = rows.filter(function (r) { return r.status === 'InProgress'; }).length;
+                vm.metrics.openRequests = rows.filter(function (r) { return r.statusName === 'Open'; }).length;
+                vm.metrics.inProgressRequests = rows.filter(function (r) { return r.statusName === 'InProgress'; }).length;
             });
 
             propertyService.getAll({ isActive: true }).then(function (response) {
