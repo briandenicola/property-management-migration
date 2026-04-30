@@ -138,6 +138,53 @@ If the client has existing Windows Server or SQL Server licenses with Software A
 
 ---
 
+## Our Approach vs. App Service Migration Assistant (ASMA)
+
+Microsoft provides two official migration tools:
+
+1. **App Service Migration Assistant (ASMA)** — GUI-based desktop tool that discovers IIS sites, assesses readiness, and migrates content + configuration to App Service in one step
+2. **App Service Migration Assistant PowerShell Scripts** — Bulk migration scripts integrated with Azure Migrate for at-scale discovery and migration of multiple ASP.NET apps across servers
+
+### Why We Use Manual Scripts for Demos
+
+The scripts in this engagement (migrate.ps1, assess.ps1, compare.ps1) are **not** replacements for ASMA. Instead, they serve a different purpose:
+
+| Aspect | ASMA / Azure Migrate | Our Scripts (migrate.ps1) |
+|--------|---------------------|--------------------------|
+| **Discovery** | Scans IIS, finds all sites automatically | N/A — single known application |
+| **Assessment** | Readiness report with blockers/warnings | assess.ps1 via Terraform + Azure Migrate API |
+| **Infrastructure** | Creates App Service during migration | Terraform pre-provisions all resources (IaC) |
+| **Config fidelity** | Migrates IIS bindings, handlers, auth modules | Configured declaratively via Terraform/az CLI |
+| **Database** | Not included in migration | BACPAC export/import with Entra ID auth |
+| **Visibility** | Black-box — runs end-to-end automatically | Each step visible and explainable |
+| **Repeatability** | One-time migration tool | Idempotent scripts, re-runnable |
+| **Target audience** | IT admins running production migrations | Consultants demonstrating the migration process |
+
+### Rationale for the Demo Approach
+
+- **Explainability:** Each step (assess, build, deploy, validate) can be narrated independently — invaluable for client presentations
+- **Transparency:** Clients see what Azure Migrate does "under the hood" — demystifying the platform
+- **IaC best practices:** Demonstrates Terraform + Azure CLI alongside migration, not as separate tools
+- **Step-by-step pacing:** The 18-minute demo can pause between Acts, with clear breakpoints
+- **Adaptability:** The scripts are IP/accelerators the client can fork and customize for production
+
+### When to Recommend ASMA to Clients
+
+After showing this demo, recommend ASMA for the client's production migration when:
+
+- **Multi-app scenarios:** Migrating 5+ IIS applications across multiple servers
+- **IIS config preservation:** Client needs automatic migration of bindings, virtual directories, SSL certs, custom handlers
+- **Microsoft support:** Client prefers a supported, documented Microsoft tool
+- **Rapid at-scale execution:** ASMA parallelizes discovery and migration; scripted approaches scale linearly
+- **Complex IIS configurations:** Modules, handlers, rewrite rules — ASMA's compatibility assessment covers these comprehensively
+
+### Reference
+
+- [Azure Migrate: ASP.NET App Service Migration](https://learn.microsoft.com/en-us/azure/app-service/app-service-asp-net-migration)
+- [App Service Migration Assistant on GitHub](https://github.com/microsoft/AppService.Migration)
+
+---
+
 ## Key Statistics to Cite
 
 - **Migration time:** Under 10 minutes for a working .NET Framework app (as shown live)

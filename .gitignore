@@ -11,6 +11,7 @@
 # (packages.config workflow, pre-PackageReference era)
 src/packages/
 packages/
+publish/
 *.nupkg
 *.nuspec
 # NuGet Symbol Packages
