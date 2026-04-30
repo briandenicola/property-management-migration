@@ -1,19 +1,13 @@
-variable "resource_group_name" {
-  description = "Name of the resource group for modern PaaS infrastructure"
-  type        = string
-  default     = "pm-modern-rg"
-}
-
-variable "location" {
+variable "region" {
   description = "Azure region for all resources"
   type        = string
-  default     = "eastus2"
+  default     = "eastus"
 }
 
-variable "app_name_prefix" {
-  description = "Prefix for all resource names (must be globally unique for App Service and Storage)"
+variable "tags" {
+  description = "Application tag for all resources"
   type        = string
-  default     = "pm-modern"
+  default     = "Property Manager"
 }
 
 variable "sql_admin_username" {
@@ -32,10 +26,4 @@ variable "sql_sku" {
   description = "Azure SQL Database SKU (service tier)"
   type        = string
   default     = "S0"
-}
-
-variable "allowed_ip_addresses" {
-  description = "List of IP addresses allowed to access Azure SQL directly (for development/migration)"
-  type        = list(string)
-  default     = []
 }

@@ -1,13 +1,13 @@
-variable "resource_group_name" {
-  description = "Name of the resource group for legacy infrastructure"
-  type        = string
-  default     = "pm-legacy-rg"
-}
-
-variable "location" {
+variable "region" {
   description = "Azure region for all resources"
   type        = string
-  default     = "eastus2"
+  default     = "eastus"
+}
+
+variable "tags" {
+  description = "Application tag for all resources"
+  type        = string
+  default     = "Property Manager"
 }
 
 variable "admin_username" {
@@ -20,11 +20,6 @@ variable "admin_password" {
   description = "Administrator password for the VM"
   type        = string
   sensitive   = true
-}
-
-variable "allowed_rdp_ip" {
-  description = "IP address allowed to RDP into the VM (CIDR notation, e.g. 203.0.113.50/32)"
-  type        = string
 }
 
 variable "vm_size" {

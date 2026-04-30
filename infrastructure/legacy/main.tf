@@ -1,48 +1,80 @@
-locals {
-  common_tags = {
-    project     = "property-management"
-    environment = "legacy"
-    managed_by  = "terraform"
-  }
+resource "random_id" "this" {
+  byte_length = 2
 }
 
-resource "azurerm_resource_group" "legacy" {
-  name     = var.resource_group_name
-  location = var.location
-  tags     = local.common_tags
+resource "random_pet" "this" {
+  length    = 1
+  separator = ""
+}
+
+resource "random_integer" "vnet_cidr" {
+  min = 10
+  max = 250
+}
+
+locals {
+  location             = var.region
+  resource_name        = "${random_pet.this.id}-${random_id.this.dec}"
+  vnet_cidr            = cidrsubnet("10.0.0.0/8", 8, random_integer.vnet_cidr.result)
+  pe_subnet_cidir      = cidrsubnet(local.vnet_cidr, 8, 1)
+  compute_subnet_cidir = cidrsubnet(local.vnet_cidr, 8, 2)
+  home_network         = "${chomp(data.http.myip.response_body)}/32"
+}
+
+resource "azurerm_resource_group" "this" {
+  name     = "${local.resource_name}_rg"
+  location = local.location
+
+  tags = {
+    Application = var.tags
+    Components  = "IIS; SQL Server Express;"
+    DeployedOn  = timestamp()
+  }
 }
 
 # --- Networking ---
 
-resource "azurerm_virtual_network" "legacy" {
-  name                = "pm-legacy-vnet"
-  address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.legacy.location
-  resource_group_name = azurerm_resource_group.legacy.name
-  tags                = local.common_tags
+resource "azurerm_virtual_network" "this" {
+  name                = "${local.resource_name}-vnet"
+  address_space       = [local.vnet_cidr]
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+
+  tags = {
+    Application = var.tags
+    DeployedOn  = timestamp()
+  }
 }
 
-resource "azurerm_subnet" "legacy" {
-  name                 = "pm-legacy-subnet"
-  resource_group_name  = azurerm_resource_group.legacy.name
-  virtual_network_name = azurerm_virtual_network.legacy.name
-  address_prefixes     = ["10.0.1.0/24"]
+resource "azurerm_subnet" "this" {
+  name                 = "${local.resource_name}-subnet"
+  resource_group_name  = azurerm_resource_group.this.name
+  virtual_network_name = azurerm_virtual_network.this.name
+  address_prefixes     = [local.compute_subnet_cidir]
 }
 
-resource "azurerm_public_ip" "legacy" {
-  name                = "pm-legacy-pip"
-  location            = azurerm_resource_group.legacy.location
-  resource_group_name = azurerm_resource_group.legacy.name
+resource "azurerm_public_ip" "this" {
+  name                = "${local.resource_name}-pip"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
   allocation_method   = "Static"
   sku                 = "Standard"
-  tags                = local.common_tags
+
+  tags = {
+    Application = var.tags
+    DeployedOn  = timestamp()
+  }
 }
 
-resource "azurerm_network_security_group" "legacy" {
-  name                = "pm-legacy-nsg"
-  location            = azurerm_resource_group.legacy.location
-  resource_group_name = azurerm_resource_group.legacy.name
-  tags                = local.common_tags
+resource "azurerm_network_security_group" "this" {
+  name                = "${local.resource_name}-nsg"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+
+  tags = {
+    Application = var.tags
+    DeployedOn  = timestamp()
+  }
 
   security_rule {
     name                       = "Allow-HTTP"
@@ -76,43 +108,52 @@ resource "azurerm_network_security_group" "legacy" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "3389"
-    source_address_prefix      = var.allowed_rdp_ip
+    source_address_prefix      = local.home_network
     destination_address_prefix = "*"
   }
 }
 
-resource "azurerm_network_interface" "legacy" {
-  name                = "pm-legacy-nic"
-  location            = azurerm_resource_group.legacy.location
-  resource_group_name = azurerm_resource_group.legacy.name
-  tags                = local.common_tags
+resource "azurerm_network_interface" "this" {
+  name                = "${local.resource_name}-nic"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+
+  tags = {
+    Application = var.tags
+    DeployedOn  = timestamp()
+  }
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.legacy.id
+    subnet_id                     = azurerm_subnet.this.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.legacy.id
+    public_ip_address_id          = azurerm_public_ip.this.id
   }
 }
 
-resource "azurerm_network_interface_security_group_association" "legacy" {
-  network_interface_id      = azurerm_network_interface.legacy.id
-  network_security_group_id = azurerm_network_security_group.legacy.id
+resource "azurerm_network_interface_security_group_association" "this" {
+  network_interface_id      = azurerm_network_interface.this.id
+  network_security_group_id = azurerm_network_security_group.this.id
 }
 
 # --- Virtual Machine ---
 
-resource "azurerm_windows_virtual_machine" "legacy" {
-  name                = "pm-legacy-vm"
-  resource_group_name = azurerm_resource_group.legacy.name
-  location            = azurerm_resource_group.legacy.location
+resource "azurerm_windows_virtual_machine" "this" {
+  name                = "${local.resource_name}-vm"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
   size                = var.vm_size
   admin_username      = var.admin_username
   admin_password      = var.admin_password
-  tags                = local.common_tags
+
+  tags = {
+    Application = var.tags
+    Components  = "IIS; SQL Server Express;"
+    DeployedOn  = timestamp()
+  }
 
   network_interface_ids = [
-    azurerm_network_interface.legacy.id
+    azurerm_network_interface.this.id
   ]
 
   os_disk {
@@ -132,18 +173,22 @@ resource "azurerm_windows_virtual_machine" "legacy" {
 # --- Data Disk for SQL Server ---
 
 resource "azurerm_managed_disk" "sql_data" {
-  name                 = "pm-legacy-sql-data"
-  location             = azurerm_resource_group.legacy.location
-  resource_group_name  = azurerm_resource_group.legacy.name
+  name                 = "${local.resource_name}-sql-data"
+  location             = azurerm_resource_group.this.location
+  resource_group_name  = azurerm_resource_group.this.name
   storage_account_type = "Premium_LRS"
   create_option        = "Empty"
   disk_size_gb         = 64
-  tags                 = local.common_tags
+
+  tags = {
+    Application = var.tags
+    DeployedOn  = timestamp()
+  }
 }
 
 resource "azurerm_virtual_machine_data_disk_attachment" "sql_data" {
   managed_disk_id    = azurerm_managed_disk.sql_data.id
-  virtual_machine_id = azurerm_windows_virtual_machine.legacy.id
+  virtual_machine_id = azurerm_windows_virtual_machine.this.id
   lun                = 0
   caching            = "ReadOnly"
 }
@@ -151,12 +196,16 @@ resource "azurerm_virtual_machine_data_disk_attachment" "sql_data" {
 # --- Custom Script Extension (IIS + SQL Server Express Setup) ---
 
 resource "azurerm_virtual_machine_extension" "setup" {
-  name                 = "pm-legacy-setup"
-  virtual_machine_id   = azurerm_windows_virtual_machine.legacy.id
+  name                 = "${local.resource_name}-setup"
+  virtual_machine_id   = azurerm_windows_virtual_machine.this.id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
-  tags                 = local.common_tags
+
+  tags = {
+    Application = var.tags
+    DeployedOn  = timestamp()
+  }
 
   settings = <<SETTINGS
     {
