@@ -96,9 +96,15 @@ function Get-TerraformOutput {
     if (-not (Test-Path (Join-Path $tfDir ".terraform"))) {
         return $null
     }
-    $val = terraform -chdir=$tfDir output -raw $Name 2>$null
-    if ($LASTEXITCODE -ne 0) { return $null }
-    return $val
+    try {
+        Push-Location $tfDir
+        $val = terraform output -raw $Name 2>$null
+        if ($LASTEXITCODE -ne 0) { return $null }
+        return $val
+    }
+    finally {
+        Pop-Location
+    }
 }
 
 #endregion
