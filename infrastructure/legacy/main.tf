@@ -25,6 +25,7 @@ resource "random_password" "admin" {
 locals {
   location             = var.location
   resource_name        = "${random_pet.this.id}-${random_id.this.dec}"
+  computer_name        = substr("pm${random_id.this.hex}", 0, 15)
   vm_size              = "Standard_B2ms"
   vnet_cidr            = cidrsubnet("10.0.0.0/8", 8, random_integer.vnet_cidr.result)
   pe_subnet_cidir      = cidrsubnet(local.vnet_cidr, 8, 1)
@@ -151,6 +152,7 @@ resource "azurerm_network_interface_security_group_association" "this" {
 
 resource "azurerm_windows_virtual_machine" "this" {
   name                = "${local.resource_name}-vm"
+  computer_name       = local.computer_name
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
   size                = local.vm_size
