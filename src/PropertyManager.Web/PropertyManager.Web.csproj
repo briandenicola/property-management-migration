@@ -80,9 +80,12 @@
   <ItemGroup>
     <Compile Include="**\*.cs" Exclude="bin\**;obj\**" />
     <Content Include="Global.asax" />
+    <Content Include="index.html" />
+    <Content Include="app\**\*.*" />
     <Content Include="web.config" />
     <Content Include="web.Release.config" />
     <None Include="packages.config" />
+    <None Include="Properties\PublishProfiles\FileSystem.pubxml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PropertyManager.Core\PropertyManager.Core.csproj">
