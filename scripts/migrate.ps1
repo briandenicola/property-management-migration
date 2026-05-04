@@ -1,7 +1,7 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Fallback migration script — build, package, and deploy the Property Manager app
+    Fallback migration script -- build, package, and deploy the Property Manager app
     to Azure App Service via zip deploy.
 
 .DESCRIPTION
@@ -42,13 +42,13 @@
     Directory to publish files to before zipping. Defaults to .\publish\.
 
 .PARAMETER SkipBuild
-    Skip the build step — use existing artifacts in PublishDir.
+    Skip the build step -- use existing artifacts in PublishDir.
 
 .PARAMETER DryRun
     Build and package but do not deploy to Azure.
 
 .PARAMETER ConnectionStringOnly
-    Only update the connection string on App Service — skip build and zip deploy.
+    Only update the connection string on App Service -- skip build and zip deploy.
 
 .EXAMPLE
     .\migrate.ps1
@@ -96,17 +96,17 @@ function Write-Step {
 
 function Write-Success {
     param([string]$Text)
-    Write-Host "  ✓ $Text" -ForegroundColor Green
+    Write-Host "  [OK] $Text" -ForegroundColor Green
 }
 
 function Write-Warn {
     param([string]$Text)
-    Write-Host "  ⚠ $Text" -ForegroundColor Yellow
+    Write-Host "  [!!] $Text" -ForegroundColor Yellow
 }
 
 function Write-Fail {
     param([string]$Text)
-    Write-Host "  ✗ $Text" -ForegroundColor Red
+    Write-Host "  [XX] $Text" -ForegroundColor Red
 }
 
 function Get-RepoRoot {
@@ -168,13 +168,13 @@ if (-not $PublishDir)    { $PublishDir    = Join-Path $repoRoot "publish" }
 
 $ZipPath = Join-Path $repoRoot "publish\PropertyManager.zip"
 
-Write-Header "Property Manager — Azure App Service Migration"
-if ($DryRun)             { Write-Warn "DRY RUN — build only, no deployment." }
-if ($SkipBuild)          { Write-Warn "SKIP BUILD — using existing artifacts in $PublishDir" }
-if ($ConnectionStringOnly){ Write-Warn "CONNECTION STRING ONLY — skipping build and deploy." }
+Write-Header "Property Manager -- Azure App Service Migration"
+if ($DryRun)             { Write-Warn "DRY RUN -- build only, no deployment." }
+if ($SkipBuild)          { Write-Warn "SKIP BUILD -- using existing artifacts in $PublishDir" }
+if ($ConnectionStringOnly){ Write-Warn "CONNECTION STRING ONLY -- skipping build and deploy." }
 
 # --- Step 1: Resolve Azure targets ---
-Write-Header "Step 1 — Resolve Azure Target"
+Write-Header "Step 1 -- Resolve Azure Target"
 Write-Step "Setting subscription $SubscriptionId..."
 Invoke-AzCli @("account", "set", "--subscription", $SubscriptionId)
 Write-Success "Subscription set."
@@ -229,7 +229,7 @@ if ($ConnectionStringOnly) {
 
 # --- Step 2: Build ---
 if (-not $SkipBuild) {
-    Write-Header "Step 2 — Build (MSBuild)"
+    Write-Header "Step 2 -- Build (MSBuild)"
 
     if (-not (Test-Path $MsBuildPath)) {
         Write-Fail "MSBuild not found at: $MsBuildPath"
@@ -308,7 +308,7 @@ if (-not $SkipBuild) {
         exit 1
     }
 } else {
-    Write-Header "Step 2 — Build (SKIPPED)"
+    Write-Header "Step 2 -- Build (SKIPPED)"
     if (-not (Test-Path $PublishDir) -or (Get-ChildItem $PublishDir -Recurse | Measure-Object).Count -eq 0) {
         Write-Fail "PublishDir is empty: $PublishDir. Cannot skip build."
         exit 1
@@ -324,16 +324,16 @@ if ($DryRun) {
 }
 
 # --- Step 3: Package ---
-Write-Header "Step 3 — Package"
+Write-Header "Step 3 -- Package"
 Write-Step "Creating deployment zip: $ZipPath..."
 
 if (Test-Path $ZipPath) { Remove-Item $ZipPath -Force | Out-Null }
 Compress-Archive -Path "$PublishDir\*" -DestinationPath $ZipPath -Force
 $zipSizeMb = [math]::Round((Get-Item $ZipPath).Length / 1MB, 1)
-Write-Success "Zip created: $ZipPath ($zipSizeMb MB)"
+Write-Success "Zip created: $ZipPath - $($zipSizeMb) MB"
 
 # --- Step 4: Database Migration (BACPAC) ---
-Write-Header "Step 4 — Database Migration (BACPAC)"
+Write-Header "Step 4 -- Database Migration (BACPAC)"
 
 # Locate SqlPackage.exe
 Write-Step "Locating SqlPackage.exe..."
@@ -395,7 +395,7 @@ if (-not (Test-Path $BacpacPath)) {
     exit 1
 }
 $bacpacSizeMb = [math]::Round((Get-Item $BacpacPath).Length / 1MB, 1)
-Write-Success "BACPAC exported: $BacpacPath ($bacpacSizeMb MB)"
+Write-Success "BACPAC exported: $BacpacPath - $($bacpacSizeMb) MB"
 
 # Get Entra ID access token for Azure SQL
 Write-Step "Acquiring Entra ID access token for Azure SQL..."
@@ -410,13 +410,13 @@ Write-Success "Access token acquired."
 # Import BACPAC into Azure SQL
 Write-Step "Importing BACPAC into Azure SQL..."
 Write-Host "  Target: $SqlServerFqdn / $SqlDatabaseName" -ForegroundColor DarkGray
-Write-Host "  (This typically takes 1–5 minutes depending on database size)" -ForegroundColor DarkGray
+Write-Host "  (This typically takes 1-5 minutes depending on database size)" -ForegroundColor DarkGray
 
 $importArgs = @(
-    "/Action:Import",
-    "/SourceFile:$BacpacPath",
-    "/TargetServerName:tcp:$SqlServerFqdn,1433",
-    "/TargetDatabaseName:$SqlDatabaseName",
+    "/Action:Import"
+    "/SourceFile:$BacpacPath"
+    "/TargetServerName:tcp:${SqlServerFqdn},1433"
+    "/TargetDatabaseName:$SqlDatabaseName"
     "/AccessToken:$AccessToken"
 )
 & $SqlPackagePath @importArgs
@@ -428,9 +428,9 @@ if ($LASTEXITCODE -ne 0) {
 Write-Success "Database imported successfully into Azure SQL."
 
 # --- Step 5: Deploy ---
-Write-Header "Step 5 — Zip Deploy"
+Write-Header "Step 5 -- Zip Deploy"
 Write-Step "Deploying to $AppServiceName in $ResourceGroup..."
-Write-Host "  (This typically takes 30–90 seconds)" -ForegroundColor DarkGray
+Write-Host "  (This typically takes 30-90 seconds)" -ForegroundColor DarkGray
 
 Invoke-AzCli @(
     "webapp", "deploy",
@@ -444,7 +444,7 @@ Invoke-AzCli @(
 Write-Success "Zip deploy complete."
 
 # --- Step 6: Update Connection String ---
-Write-Header "Step 6 — Connection String"
+Write-Header "Step 6 -- Connection String"
 Write-Step "Reading SQL connection string from Terraform..."
 $connStr = Get-TerraformOutput -Name "sql_connection_string"
 if ($connStr) {
@@ -464,7 +464,7 @@ if ($connStr) {
 }
 
 # --- Step 7: Restart & Verify ---
-Write-Header "Step 7 — Restart and Health Check"
+Write-Header "Step 7 -- Restart and Health Check"
 Write-Step "Restarting App Service to apply configuration..."
 Invoke-AzCli @(
     "webapp", "restart",
@@ -483,7 +483,7 @@ try {
     if ($response.StatusCode -eq 200) {
         Write-Success "App is live! Status: $($response.StatusCode)"
     } else {
-        Write-Warn "App returned status: $($response.StatusCode) — check logs."
+        Write-Warn "App returned status: $($response.StatusCode) -- check logs."
     }
 } catch {
     Write-Warn "Health check request failed: $_"
@@ -503,3 +503,5 @@ Write-Host "    - Run .\scripts\compare.ps1 for cost comparison" -ForegroundColo
 Write-Host "    - Open Azure Portal → $AppServiceName → Application Insights" -ForegroundColor White
 Write-Host ""
 Write-Success "Deployment pipeline complete."
+
+
