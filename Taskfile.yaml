@@ -58,5 +58,7 @@ tasks:
     desc: Builds and deploys the application (build + token replacement instructions)
     cmds:
     - task: build
-    - echo "Build complete. Deploy publish/ folder to IIS on the VM."
-    - echo "Replace tokens in web.config - #{DatabaseServer}#, #{DatabaseName}#, #{DatabaseUser}#, #{DatabasePassword}#"
+    - cmd: echo "Build complete. Deploy publish/ folder to IIS on the VM."
+      silent: true
+    - cmd: echo "Replace tokens in web.config - {DatabaseServer}, {DatabaseName}, {DatabaseUser}, {DatabasePassword}"
+      silent: true
