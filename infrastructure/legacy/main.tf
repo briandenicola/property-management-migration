@@ -30,7 +30,7 @@ locals {
   vnet_cidr            = cidrsubnet("10.0.0.0/8", 8, random_integer.vnet_cidr.result)
   pe_subnet_cidir      = cidrsubnet(local.vnet_cidr, 8, 1)
   compute_subnet_cidir = cidrsubnet(local.vnet_cidr, 8, 2)
-  home_network         = "${chomp(data.http.myip.response_body)}/32"
+  bastion_subnet_cidr  = cidrsubnet(local.vnet_cidr, 8, 3)
 }
 
 resource "azurerm_resource_group" "this" {
@@ -65,17 +65,11 @@ resource "azurerm_subnet" "this" {
   address_prefixes     = [local.compute_subnet_cidir]
 }
 
-resource "azurerm_public_ip" "this" {
-  name                = "${local.resource_name}-pip"
-  location            = azurerm_resource_group.this.location
-  resource_group_name = azurerm_resource_group.this.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-
-  tags = {
-    Application = var.tags
-    DeployedOn  = timestamp()
-  }
+resource "azurerm_subnet" "bastion" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = azurerm_resource_group.this.name
+  virtual_network_name = azurerm_virtual_network.this.name
+  address_prefixes     = [local.bastion_subnet_cidr]
 }
 
 resource "azurerm_network_security_group" "this" {
@@ -96,7 +90,7 @@ resource "azurerm_network_security_group" "this" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "80"
-    source_address_prefix      = "*"
+    source_address_prefix      = "VirtualNetwork"
     destination_address_prefix = "*"
   }
 
@@ -108,19 +102,7 @@ resource "azurerm_network_security_group" "this" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "443"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Allow-RDP"
-    priority                   = 120
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "3389"
-    source_address_prefix      = local.home_network
+    source_address_prefix      = "VirtualNetwork"
     destination_address_prefix = "*"
   }
 }
@@ -139,7 +121,6 @@ resource "azurerm_network_interface" "this" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.this.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.this.id
   }
 }
 

@@ -9,20 +9,6 @@ locals {
   dc_private_ip    = cidrhost(local.compute_subnet_cidir, 10)
 }
 
-resource "azurerm_public_ip" "dc" {
-  name                = "${local.resource_name}-dc-pip"
-  location            = azurerm_resource_group.this.location
-  resource_group_name = azurerm_resource_group.this.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-
-  tags = {
-    Application = var.tags
-    Role        = "Domain Controller"
-    DeployedOn  = timestamp()
-  }
-}
-
 resource "azurerm_network_interface" "dc" {
   name                = "${local.resource_name}-dc-nic"
   location            = azurerm_resource_group.this.location
@@ -39,7 +25,6 @@ resource "azurerm_network_interface" "dc" {
     subnet_id                     = azurerm_subnet.this.id
     private_ip_address_allocation = "Static"
     private_ip_address            = local.dc_private_ip
-    public_ip_address_id          = azurerm_public_ip.dc.id
   }
 }
 

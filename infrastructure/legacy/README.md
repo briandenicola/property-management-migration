@@ -24,6 +24,7 @@ domain-joined to simulate a typical enterprise on-premises setup.
 ┌─────────────────────────────────────────────────────────┐
 │  Azure VNet (10.x.0.0/16)                               │
 │                                                         │
+│  Compute Subnet (10.x.2.0/24)                           │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
 │  │  DC (pm-dc01)│  │ IIS (pm-xxx)│  │Client (pm-  │    │
 │  │  AD DS + DNS │  │ IIS + SQL   │  │client01)    │    │
@@ -31,8 +32,16 @@ domain-joined to simulate a typical enterprise on-premises setup.
 │  └─────────────┘  └─────────────┘  └─────────────┘    │
 │         │                 │                │            │
 │         └─────── bjdazure.tech domain ─────┘            │
+│                                                         │
+│  AzureBastionSubnet (10.x.3.0/24)                       │
+│  ┌──────────────────────────────┐                       │
+│  │  Azure Bastion (Basic SKU)   │◄── Public IP          │
+│  │  Secure RDP to all VMs       │                       │
+│  └──────────────────────────────┘                       │
 └─────────────────────────────────────────────────────────┘
 ```
+
+**No VMs have public IPs.** All RDP access is through Azure Bastion via the Azure Portal.
 
 ## Provisioning Order
 
@@ -48,7 +57,26 @@ Terraform handles dependencies automatically:
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) authenticated (`az login`)
 - An Azure subscription
 
-## Quick Start (Using Task)
+## Connecting to VMs
+
+All VMs are private (no public IPs). Use **Azure Bastion** to connect:
+
+1. Open the [Azure Portal](https://portal.azure.com)
+2. Navigate to the VM you want to access
+3. Click **Connect** > **Bastion**
+4. Enter credentials:
+   - **Before domain join:** `pmadmin` / (password from `terraform output -raw vm_admin_password`)
+   - **After domain join:** `alice.manager@bjdazure.tech` / `P@ssw0rd2024!`
+
+Or via Azure CLI:
+```bash
+# Get the Bastion and VM names
+BASTION=$(terraform output -raw bastion_name)
+RG=$(terraform output -raw resource_group_name)
+
+# Connect (opens native RDP client)
+az network bastion rdp --name $BASTION --resource-group $RG --target-resource-id <vm-resource-id>
+```
 
 From the repository root:
 
@@ -128,16 +156,13 @@ The Custom Script Extension runs during VM creation and:
 
 ```bash
 terraform output resource_group_name      # Resource group name
-terraform output vm_public_ip             # IIS VM static public IP
-terraform output rdp_connection_string    # RDP command for IIS VM
+terraform output vm_private_ip            # IIS VM private IP
 terraform output vm_admin_username        # Administrator username
 terraform output -raw vm_admin_password   # Admin password (sensitive)
 terraform output -raw sql_sa_password     # SQL SA password (sensitive)
-terraform output iis_url                  # URL to access the website
-terraform output dc_public_ip             # Domain Controller public IP
-terraform output dc_rdp_connection_string # RDP command for DC
-terraform output client_public_ip         # Client workstation public IP
-terraform output client_rdp_connection_string  # RDP command for client
+terraform output bastion_name             # Bastion host name
+terraform output dc_private_ip            # Domain Controller private IP
+terraform output client_private_ip        # Client workstation private IP
 terraform output domain_name              # AD domain FQDN
 terraform output domain_admin_upn         # Domain admin login (UPN)
 ```
@@ -159,15 +184,12 @@ az group delete -n <resource_group_name> --yes --no-wait
 
 ## Security Notes
 
-- **RDP Access:** Restricted to your current IP (auto-detected at provisioning time)
+- **No public IPs on VMs** -- all access via Azure Bastion only
+- **Bastion** is the only resource with a public IP (required by Azure)
 - **Passwords:** All sensitive values are randomly generated and marked `sensitive` in Terraform outputs -- never stored in tfvars
 - **Never commit Terraform state files** to version control (they contain sensitive data)
 - All VMs are domain-joined to `bjdazure.tech` (configurable via `domain_name` variable)
-- Update the NSG rule if you need to RDP from a different IP:
-  ```bash
-  az network nsg rule update -g <rg> --nsg-name <nsg> -n Allow-RDP \
-    --source-address-prefixes "YOUR_NEW_IP/32"
-  ```
+- NSG allows HTTP/HTTPS only within the VNet (no external inbound)
 
 ## Active Directory Configuration
 

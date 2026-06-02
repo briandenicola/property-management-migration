@@ -6,20 +6,6 @@ locals {
   client_vm_size       = "Standard_B2s"
 }
 
-resource "azurerm_public_ip" "client" {
-  name                = "${local.resource_name}-client-pip"
-  location            = azurerm_resource_group.this.location
-  resource_group_name = azurerm_resource_group.this.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-
-  tags = {
-    Application = var.tags
-    Role        = "Client Workstation"
-    DeployedOn  = timestamp()
-  }
-}
-
 resource "azurerm_network_interface" "client" {
   name                = "${local.resource_name}-client-nic"
   location            = azurerm_resource_group.this.location
@@ -35,7 +21,6 @@ resource "azurerm_network_interface" "client" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.this.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.client.id
   }
 }
 

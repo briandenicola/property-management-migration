@@ -3,14 +3,9 @@ output "resource_group_name" {
   value       = azurerm_resource_group.this.name
 }
 
-output "vm_public_ip" {
-  description = "Public IP address of the legacy VM"
-  value       = azurerm_public_ip.this.ip_address
-}
-
-output "rdp_connection_string" {
-  description = "RDP connection command"
-  value       = "mstsc /v:${azurerm_public_ip.this.ip_address}:3389"
+output "vm_private_ip" {
+  description = "Private IP address of the IIS VM"
+  value       = azurerm_network_interface.this.private_ip_address
 }
 
 output "vm_admin_username" {
@@ -30,29 +25,19 @@ output "sql_sa_password" {
   sensitive   = true
 }
 
-output "iis_url" {
-  description = "URL to access the IIS-hosted application"
-  value       = "http://${azurerm_public_ip.this.ip_address}"
+output "bastion_name" {
+  description = "Azure Bastion host name (use Azure Portal to connect)"
+  value       = azurerm_bastion_host.this.name
 }
 
-output "dc_public_ip" {
-  description = "Public IP of the Domain Controller"
-  value       = azurerm_public_ip.dc.ip_address
+output "dc_private_ip" {
+  description = "Private IP of the Domain Controller"
+  value       = local.dc_private_ip
 }
 
-output "dc_rdp_connection_string" {
-  description = "RDP connection command for the DC"
-  value       = "mstsc /v:${azurerm_public_ip.dc.ip_address}:3389"
-}
-
-output "client_public_ip" {
-  description = "Public IP of the Windows client workstation"
-  value       = azurerm_public_ip.client.ip_address
-}
-
-output "client_rdp_connection_string" {
-  description = "RDP connection command for the client"
-  value       = "mstsc /v:${azurerm_public_ip.client.ip_address}:3389"
+output "client_private_ip" {
+  description = "Private IP of the Windows client workstation"
+  value       = azurerm_network_interface.client.private_ip_address
 }
 
 output "domain_name" {
