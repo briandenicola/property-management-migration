@@ -32,13 +32,13 @@ This migration adds:
 | `UserName = identity.Name` | `UserName = preferred_username ?? emailaddress ?? name` |
 | `Role = ResolveRole(principal)` | `Role = GetRole(claims)` |
 
-**Windows Auth (`src/PropertyManager.Web\Controllers\AccountController.cs`)**
+**Windows Auth (`src/Legacy/PropertyManager.Web/Controllers/AccountController.cs`)**
 
 - Reads `User.Identity` as `WindowsIdentity`
 - Builds display name from `DOMAIN\username`
 - Resolves `Admin` and `User` from configured AD groups
 
-**Easy Auth (`src/PropertyManager.Web.Azure\Controllers\AccountController.cs`)**
+**Easy Auth (`src/Azure/PropertyManager.Web/Controllers/AccountController.cs`)**
 
 - Reads `X-MS-CLIENT-PRINCIPAL`
 - Base64 decodes and deserializes the Easy Auth principal JSON payload
@@ -58,13 +58,13 @@ This migration adds:
 | AD groups from `Auth:AdminGroups` / `Auth:UserGroups` | Entra app roles from token claims |
 | `requiredRoles.Contains(userRole)` | `requiredRoles.Any(r => userRoles.Contains(r))` |
 
-**Windows Auth (`src/PropertyManager.Web\Filters\WindowsRoleAuthorizeAttribute.cs`)**
+**Windows Auth (`src/Legacy/PropertyManager.Web/Filters/WindowsRoleAuthorizeAttribute.cs`)**
 
 - Checks whether the current principal is authenticated
 - Resolves a single app role by evaluating configured AD groups
 - Compares the resolved role to `AppRoles`
 
-**Easy Auth (`src/PropertyManager.Web.Azure\Filters\EasyAuthRoleAuthorizeAttribute.cs`)**
+**Easy Auth (`src/Azure/PropertyManager.Web/Filters/EasyAuthRoleAuthorizeAttribute.cs`)**
 
 - Requires the Easy Auth principal header to exist
 - Deserializes claims from the header
@@ -75,23 +75,36 @@ This migration adds:
 
 The Azure infrastructure now includes:
 
-- `azuread` provider in `infrastructure/azure\providers.tf`
+- `azuread` provider in `infrastructure/azure/providers.tf`
 - `data.azuread_client_config.current` to read the tenant ID
-- `azuread_application.this` with:
-  - single-tenant sign-in (`AzureADMyOrg`)
-  - `Admin` and `User` app roles
-  - Easy Auth callback redirect URI
-  - optional `email` and `groups` ID token claims
-- `azuread_service_principal.this`
-- `azuread_application_password.this` for the Easy Auth client secret
-- `random_uuid` resources for stable app role IDs
+- `data.azuread_application.this` to look up the manually-created app registration
+- `azuread_application_redirect_uris.this` — adds the callback URI after App Service is created
+- `azuread_application_password.this` — 7-day expiring client secret for Easy Auth
 - `auth_settings_v2` on `azurerm_windows_web_app.this`
 - App setting `MICROSOFT_PROVIDER_AUTHENTICATION_SECRET`
 - Outputs for the Entra client ID and tenant ID
 
+## App Registration setup (manual)
+
+Create the App Registration in the Azure Portal before running Terraform:
+
+1. **App registrations** → New registration → Name: `migration-demo-app`, Single tenant
+2. **App roles** → Create two roles:
+   - Display name: `Admin`, Value: `Admin`, Allowed member types: Users/Groups
+   - Display name: `User`, Value: `User`, Allowed member types: Users/Groups
+3. **Authentication** → Under "Implicit grant and hybrid flows":
+   - ✅ **Check "ID tokens"** (required — Easy Auth uses this to get the identity token on callback)
+4. Copy the **Application (client) ID** from Overview
+5. Save it in `infrastructure/azure/.env`:
+   ```
+   ENTRA_APP_CLIENT_ID=your-client-id-here
+   ```
+
+> **Important**: If ID tokens are not enabled, you will get error `AADSTS700054: response_type 'id_token' is not enabled for the application`.
+
 ## Assigning app roles in Azure Portal
 
-1. Deploy the Terraform changes.
+1. Deploy the Terraform changes (`task azure:up`).
 2. Open **Microsoft Entra ID** in the Azure Portal.
 3. Go to **Enterprise applications**.
 4. Open the service principal created for the PropertyPro app registration.
@@ -109,7 +122,29 @@ Easy Auth only runs inside Azure App Service, so `X-MS-CLIENT-PRINCIPAL` is not 
 
 For local testing:
 
-- Continue using the legacy project locally if you need Windows Authentication behavior.
-- Treat `src/PropertyManager.Web.Azure\` as reference code for the Azure deployment.
-- Deploy to Azure App Service to validate the Easy Auth flow end to end.
+- Use the `src/Legacy/` project locally for Windows Authentication behavior.
+- Use `src/Azure/` as the Azure deployment source.
+- Deploy to Azure App Service to validate the Easy Auth flow end to end (`task azure:deploy`).
 - After deployment, call `GET /api/account/userinfo` and verify the returned `UserInfoDto` matches the signed-in user and assigned app role.
+
+## Project structure
+
+```
+src/
+  Legacy/                    # Windows Auth on IIS (full compilable project)
+    PropertyManager.sln
+    PropertyManager.Core/
+    PropertyManager.Data/
+    PropertyManager.Web/     # Windows Auth controllers + web.config
+  Azure/                     # Easy Auth on App Service (full compilable project)
+    PropertyManager.sln
+    PropertyManager.Core/
+    PropertyManager.Data/
+    PropertyManager.Web/     # Easy Auth controllers + web.config (no Windows Auth)
+```
+
+The key differences between Legacy and Azure `PropertyManager.Web`:
+- `Controllers/AccountController.cs` — reads X-MS-CLIENT-PRINCIPAL instead of WindowsIdentity
+- `Filters/` — EasyAuthRoleAuthorizeAttribute instead of WindowsRoleAuthorizeAttribute
+- `web.config` — no Windows Auth, no anonymous deny, no Auth:AdminGroups/UserGroups settings
+- All other controllers use `[EasyAuthRoleAuthorize]` instead of `[WindowsRoleAuthorize]`

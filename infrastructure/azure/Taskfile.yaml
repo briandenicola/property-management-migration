@@ -43,11 +43,12 @@ tasks:
         sh: terraform output -raw resource_group_name
 
   deploy:
-    desc: Builds the app and deploys to Azure App Service
+    desc: Builds the Azure app and deploys to App Service
     dir: "{{.ROOT_DIR}}"
     cmds:
     - task: :build
-    - pwsh -NoProfile -Command "Copy-Item '{{.ROOT_DIR}}\src\PropertyManager.Web.Azure\web.config' '{{.ROOT_DIR}}\publish\web.config' -Force"
+      vars:
+        CLI_ARGS: azure
     - pwsh -NoProfile -Command "Compress-Archive -Path '{{.ROOT_DIR}}\publish\*' -DestinationPath '{{.ROOT_DIR}}\publish\app.zip' -Force"
     - az webapp deploy --resource-group {{.RG}} --name {{.APP_NAME}} --src-path "{{.ROOT_DIR}}\publish\app.zip" --type zip --clean true
     - pwsh -NoProfile -Command "Remove-Item '{{.ROOT_DIR}}\publish\app.zip' -Force"

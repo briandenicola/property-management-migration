@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <setParameter name="IIS Web Application Name" value="Default Web Site/PropertyManager.Web_deploy" />
+  <setParameter name="PropertyProDb-Web.config Connection String" value="Server=#{DatabaseServer}#;Database=#{DatabaseName}#;User ID=#{DatabaseUser}#;Password=#{DatabasePassword}#;MultipleActiveResultSets=True;Connection Timeout=30;" />
+</parameters>

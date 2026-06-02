@@ -3,12 +3,9 @@ version: '3'
 dotenv: ['infrastructure/azure/.env']
 
 env:
-  APP_TITLE: "Property Manager Legacy"
-  DEFAULT_REGION: "canadacentral"
+  APP_TITLE: "Property Manager"
+  DEFAULT_REGION: "southcentralus"
   MSBUILD: "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe"
-  SOLUTION_DIR: "{{.ROOT_DIR}}\\src"
-  SOLUTION_FILE: "{{.ROOT_DIR}}\\src\\PropertyManager.sln"
-  WEB_PROJECT: "{{.ROOT_DIR}}\\src\\PropertyManager.Web\\PropertyManager.Web.csproj"
   PUBLISH_DIR: "{{.ROOT_DIR}}\\publish"
 
 includes:
@@ -27,40 +24,16 @@ tasks:
     - task --list
 
   build:
-    desc: Builds the solution in Release configuration
-    cmds:
-    - task: clean
-    - task: restore
-    - task: compile
-    - task: publish
-
-  clean:
-    desc: Cleans the publish output directory
+    desc: "Builds a solution in Release configuration (usage: task build -- legacy|azure)"
+    vars:
+      TARGET: '{{default "legacy" .CLI_ARGS}}'
+      SOLUTION_DIR: '{{.ROOT_DIR}}\src\{{if eq .TARGET "azure"}}Azure{{else}}Legacy{{end}}'
+      SOLUTION_FILE: '{{.ROOT_DIR}}\src\{{if eq .TARGET "azure"}}Azure{{else}}Legacy{{end}}\PropertyManager.sln'
+      WEB_PROJECT: '{{.ROOT_DIR}}\src\{{if eq .TARGET "azure"}}Azure{{else}}Legacy{{end}}\PropertyManager.Web\PropertyManager.Web.csproj'
     cmds:
     - pwsh -NoProfile -Command "if (Test-Path '{{.PUBLISH_DIR}}') { Remove-Item -Recurse -Force '{{.PUBLISH_DIR}}' }"
     - pwsh -NoProfile -Command "New-Item -ItemType Directory -Path '{{.PUBLISH_DIR}}' -Force | Out-Null"
-
-  restore:
-    desc: Restores NuGet packages
-    cmds:
     - '"{{.MSBUILD}}" "{{.SOLUTION_FILE}}" /t:Restore /p:RestorePackagesConfig=true /verbosity:minimal /nologo'
-
-  compile:
-    desc: Compiles the solution in Release mode
-    cmds:
     - '"{{.MSBUILD}}" "{{.SOLUTION_FILE}}" /t:Build /p:Configuration=Release /verbosity:minimal /nologo /m'
-
-  publish:
-    desc: Publishes the web project to the publish/ folder
-    cmds:
     - '"{{.MSBUILD}}" "{{.WEB_PROJECT}}" /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /verbosity:minimal /nologo /m'
     - pwsh -NoProfile -Command "Copy-Item '{{.SOLUTION_DIR}}\PropertyManager.Web\obj\Release\Package\PackageTmp\*' '{{.PUBLISH_DIR}}' -Recurse -Force"
-
-  deploy:
-    desc: Builds and deploys the application (build + token replacement instructions)
-    cmds:
-    - task: build
-    - cmd: echo "Build complete. Deploy publish/ folder to IIS on the VM."
-      silent: true
-    - cmd: echo "Replace tokens in web.config - {DatabaseServer}, {DatabaseName}, {DatabaseUser}, {DatabasePassword}"
-      silent: true
