@@ -100,7 +100,7 @@ resource "azurerm_windows_web_app" "this" {
   }
 
   connection_string {
-    name  = "PropertyManager"
+    name  = "PropertyProDb"
     type  = "SQLAzure"
     value = "Server=tcp:${azurerm_mssql_server.this.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.this.name};Persist Security Info=False;User ID=${var.sql_admin_username};Password=${random_password.sql.result};MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   }
