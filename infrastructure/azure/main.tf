@@ -85,7 +85,7 @@ resource "azurerm_windows_web_app" "this" {
       client_id                  = var.entra_app_client_id
       client_secret_setting_name = "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET"
       tenant_auth_endpoint       = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/v2.0"
-      allowed_audiences          = ["api://${var.entra_app_client_id}"]
+      allowed_audiences          = ["api://${var.entra_app_client_id}", "${var.entra_app_client_id}"]
     }
   }
 
