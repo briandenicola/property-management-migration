@@ -1,5 +1,8 @@
 version: '3'
 
+vars:
+  DEFAULT_REGION: southcentralus
+
 tasks:
   up:
     desc: Creates the legacy infrastructure in Azure
@@ -31,30 +34,43 @@ tasks:
       REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
 
   creds:
-    desc: Shows SQL and VM credentials from Terraform output
+    desc: Shows VM and domain credentials from Terraform output
     cmds:
-    - cmd: echo "{{.CONNECT_STRING}} /w:1024 /h:768 [username:{{.USERNAME}} password:{{.PASSWORD}}]"
+    - cmd: echo "Domain - {{.DOMAIN}}"
       silent: true
-    - cmd: echo "SQL Password:{{.SQL_PASSWORD}}"
-      silent: true      
+    - cmd: echo "Admin UPN - {{.ADMIN_UPN}}"
+      silent: true
+    - cmd: echo "Local Admin - {{.USERNAME}} / {{.PASSWORD}}"
+      silent: true
+    - cmd: echo "SQL Password - {{.SQL_PASSWORD}}"
+      silent: true
     vars:
+      DOMAIN:
+        sh: terraform output -raw domain_name
+      ADMIN_UPN:
+        sh: terraform output -raw domain_admin_upn
       USERNAME:
         sh: terraform output -raw vm_admin_username
       PASSWORD:
         sh: terraform output -raw vm_admin_password
-      CONNECT_STRING:
-        sh: terraform output -raw rdp_connection_string
       SQL_PASSWORD:
         sh: terraform output -raw sql_sa_password
 
-  browse:
-    desc: Opens the deployed website in the default browser
+  connect:
+    desc: "Connect to a VM via Azure Bastion (usage: task connect -- iis|dc|client)"
     cmds:
-    - cmd: powershell -Command "Start-Process 'http://{{.IP}}'"
-      silent: true
+    - az network bastion rdp --name {{.BASTION}} --resource-group {{.RG}} --target-resource-id {{.VM_ID}}
     vars:
-      IP:
-        sh: terraform output -raw vm_public_ip
+      BASTION:
+        sh: terraform output -raw bastion_name
+      RG:
+        sh: terraform output -raw resource_group_name
+      VM_ID:
+        sh: |
+          {{if eq .CLI_ARGS "dc"}}terraform output -raw dc_vm_id
+          {{else if eq .CLI_ARGS "client"}}terraform output -raw client_vm_id
+          {{else}}terraform output -raw iis_vm_id
+          {{end}}
 
   down:
     desc: Destroys all Azure resources and cleans up Terraform

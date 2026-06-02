@@ -49,3 +49,18 @@ output "domain_admin_upn" {
   description = "Domain admin UPN for login"
   value       = "${var.admin_username}@${var.domain_name}"
 }
+
+output "iis_vm_id" {
+  description = "Resource ID of the IIS VM"
+  value       = azurerm_windows_virtual_machine.this.id
+}
+
+output "dc_vm_id" {
+  description = "Resource ID of the Domain Controller VM"
+  value       = azurerm_windows_virtual_machine.dc.id
+}
+
+output "client_vm_id" {
+  description = "Resource ID of the Windows client VM"
+  value       = azurerm_windows_virtual_machine.client.id
+}
