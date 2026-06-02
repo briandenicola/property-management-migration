@@ -1,5 +1,9 @@
 version: '3'
 
+dotenv: ['.env']
+
+vars:
+  DEFAULT_REGION: southcentralus
 
 tasks:
   up:
@@ -20,14 +24,14 @@ tasks:
   apply:
     desc: Applies Terraform configuration for the Azure PaaS deployment
     cmds:
-    - terraform apply -auto-approve -var "location={{.REGION}}" -compact-warnings
+    - terraform apply -auto-approve -var "location={{.REGION}}" -var "entra_app_client_id={{.ENTRA_APP_CLIENT_ID}}" -compact-warnings
     vars:
       REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
 
   plan:
     desc: Shows Terraform execution plan for the Azure PaaS deployment
     cmds:
-    - terraform plan -var "location={{.REGION}}" -compact-warnings
+    - terraform plan -var "location={{.REGION}}" -var "entra_app_client_id={{.ENTRA_APP_CLIENT_ID}}" -compact-warnings
     vars:
       REGION: '{{default .DEFAULT_REGION .CLI_ARGS}}'
 

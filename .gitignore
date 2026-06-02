@@ -2,6 +2,9 @@
 # .NET Framework 4.6 / Visual Studio 2015 — comprehensive
 # ============================================================
 
+# Environment files (secrets)
+.env
+
 # Build output
 [Bb]in/
 [Oo]bj/
