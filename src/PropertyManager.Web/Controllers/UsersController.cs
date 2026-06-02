@@ -1,10 +1,12 @@
 using System.Linq;
 using System.Web.Http;
 using PropertyManager.Data;
+using PropertyManager.Web.Filters;
 using PropertyManager.Web.Models;
 
 namespace PropertyManager.Web.Controllers
 {
+    [WindowsRoleAuthorize(AppRoles = "Admin")]
     [RoutePrefix("api/users")]
     public class UsersController : ApiController
     {

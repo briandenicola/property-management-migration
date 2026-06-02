@@ -7,12 +7,13 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
-using Microsoft.AspNet.Identity;
 using PropertyManager.Core.Interfaces;
+using PropertyManager.Web.Filters;
 using PropertyManager.Web.Models;
 
 namespace PropertyManager.Web.Controllers
 {
+    [Authorize]
     [RoutePrefix("api")]
     public class AttachmentsController : ApiController
     {
@@ -79,7 +80,7 @@ namespace PropertyManager.Web.Controllers
                 fileName,
                 file.Headers.ContentType == null ? "application/octet-stream" : file.Headers.ContentType.MediaType,
                 fileBytes,
-                User.Identity.GetUserId());
+                User.Identity == null ? null : User.Identity.Name);
 
             return Ok(MapToDto(attachment));
         }
@@ -108,6 +109,7 @@ namespace PropertyManager.Web.Controllers
         }
 
         [HttpDelete]
+        [WindowsRoleAuthorize(AppRoles = "Admin")]
         [Route("attachments/{id:int}")]
         public IHttpActionResult Delete(int id)
         {

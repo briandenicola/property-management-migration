@@ -2,10 +2,12 @@ using System.Linq;
 using System.Web.Http;
 using PropertyManager.Core.Interfaces;
 using PropertyManager.Data.Entities;
+using PropertyManager.Web.Filters;
 using PropertyManager.Web.Models;
 
 namespace PropertyManager.Web.Controllers
 {
+    [Authorize]
     [RoutePrefix("api/properties")]
     public class PropertiesController : ApiController
     {
@@ -40,6 +42,7 @@ namespace PropertyManager.Web.Controllers
         }
 
         [HttpPost]
+        [WindowsRoleAuthorize(AppRoles = "Admin")]
         [Route("")]
         public IHttpActionResult Create(PropertyDto dto)
         {
@@ -64,6 +67,7 @@ namespace PropertyManager.Web.Controllers
         }
 
         [HttpPut]
+        [WindowsRoleAuthorize(AppRoles = "Admin")]
         [Route("{id:int}")]
         public IHttpActionResult Update(int id, PropertyDto dto)
         {
@@ -94,6 +98,7 @@ namespace PropertyManager.Web.Controllers
         }
 
         [HttpDelete]
+        [WindowsRoleAuthorize(AppRoles = "Admin")]
         [Route("{id:int}")]
         public IHttpActionResult Delete(int id)
         {

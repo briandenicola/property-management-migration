@@ -9,22 +9,22 @@
         .controller('MaintenanceNewController', MaintenanceNewController)
         .controller('PropertiesListController', PropertiesListController)
         .controller('PropertyDetailController', PropertyDetailController)
-        .controller('TenantsListController', TenantsListController)
-        .controller('LoginController', LoginController);
+        .controller('TenantsListController', TenantsListController);
 
-    MainController.$inject = ['$state', '$rootScope', 'authService'];
-    function MainController($state, $rootScope, authService) {
+    MainController.$inject = ['$rootScope', 'authService'];
+    function MainController($rootScope, authService) {
         var vm = this;
-
-        vm.logout = function () {
-            authService.logout().finally(function () {
-                $rootScope.currentUser = null;
-                $state.go('login');
-            });
-        };
 
         vm.isLoggedIn = function () {
             return authService.isAuthenticated();
+        };
+
+        vm.isAdmin = function () {
+            return authService.isAdmin();
+        };
+
+        vm.getUserName = function () {
+            return $rootScope.currentUser ? $rootScope.currentUser.displayName : '';
         };
     }
 
@@ -358,26 +358,4 @@
         }
     }
 
-    LoginController.$inject = ['$state', '$rootScope', 'authService'];
-    function LoginController($state, $rootScope, authService) {
-        var vm = this;
-        vm.credentials = { username: '', password: '', rememberMe: true };
-        vm.errorMessage = '';
-        vm.working = false;
-
-        vm.login = function () {
-            vm.working = true;
-            vm.errorMessage = '';
-            authService.login(vm.credentials).then(function () {
-                return authService.getUserInfo();
-            }).then(function (response) {
-                $rootScope.currentUser = response.data;
-                $state.go('dashboard');
-            }).catch(function () {
-                vm.errorMessage = 'Login failed. Please check your credentials.';
-            }).finally(function () {
-                vm.working = false;
-            });
-        };
-    }
 })();

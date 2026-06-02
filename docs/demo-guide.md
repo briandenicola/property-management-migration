@@ -56,6 +56,8 @@
 
 **What to click:** Load the app, browse to Maintenance Requests, open one with an attachment.
 
+**Windows Auth demo note:** Call out that the app now authenticates transparently with the presenter's Windows session. There is no app login form; the header should already show the signed-in Windows user.
+
 **Fallback:** If VM is unreachable → show screenshot in `docs/screenshots/legacy-app.png`.
 
 ---

@@ -34,3 +34,33 @@ output "iis_url" {
   description = "URL to access the IIS-hosted application"
   value       = "http://${azurerm_public_ip.this.ip_address}"
 }
+
+output "dc_public_ip" {
+  description = "Public IP of the Domain Controller"
+  value       = azurerm_public_ip.dc.ip_address
+}
+
+output "dc_rdp_connection_string" {
+  description = "RDP connection command for the DC"
+  value       = "mstsc /v:${azurerm_public_ip.dc.ip_address}:3389"
+}
+
+output "client_public_ip" {
+  description = "Public IP of the Windows client workstation"
+  value       = azurerm_public_ip.client.ip_address
+}
+
+output "client_rdp_connection_string" {
+  description = "RDP connection command for the client"
+  value       = "mstsc /v:${azurerm_public_ip.client.ip_address}:3389"
+}
+
+output "domain_name" {
+  description = "Active Directory domain FQDN"
+  value       = var.domain_name
+}
+
+output "domain_admin_upn" {
+  description = "Domain admin UPN for login"
+  value       = "${var.admin_username}@${var.domain_name}"
+}

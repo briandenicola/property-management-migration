@@ -14,3 +14,9 @@ variable "admin_username" {
   type        = string
   default     = "pmadmin"
 }
+
+variable "domain_name" {
+  description = "Active Directory domain FQDN"
+  type        = string
+  default     = "bjdazure.tech"
+}

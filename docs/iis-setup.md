@@ -46,8 +46,8 @@ Web Server (IIS)
 │   └── Dynamic Content Compression ✓
 ├── Security
 │   ├── Request Filtering         ✓  (enforces maxAllowedContentLength)
-│   ├── Windows Authentication    ✓  (used by SQL Server pass-through if needed)
-│   └── Anonymous Authentication  ✓  (app handles its own auth via OWIN)
+│   ├── Windows Authentication    ✓  (required for PropertyManager integrated auth)
+│   └── Anonymous Authentication  ✓  (install feature, but disable it for the PropertyManager site)
 ├── Application Development
 │   ├── .NET Extensibility 4.5    ✓
 │   ├── ASP.NET 4.5               ✓
@@ -175,6 +175,53 @@ For internal testing, a self-signed cert is fine:
 
 ```powershell
 $cert = New-SelfSignedCertificate -DnsName "propertypro.yourcompany.com" -CertStoreLocation "cert:\LocalMachine\My"
+```
+
+### Windows Authentication
+
+PropertyManager now relies on **IIS Windows Authentication** instead of an application login form.
+
+In IIS Manager:
+1. Select the PropertyManager site or application.
+2. Open **Authentication**.
+3. Set **Windows Authentication** to **Enabled**.
+4. Set **Anonymous Authentication** to **Disabled**.
+5. Recycle the app pool after applying the change.
+
+PowerShell equivalent:
+
+```powershell
+Import-Module WebAdministration
+
+Set-WebConfigurationProperty -PSPath 'IIS:\' -Location 'Default Web Site/PropertyPro' -Filter "system.webServer/security/authentication/windowsAuthentication" -Name enabled -Value true
+Set-WebConfigurationProperty -PSPath 'IIS:\' -Location 'Default Web Site/PropertyPro' -Filter "system.webServer/security/authentication/anonymousAuthentication" -Name enabled -Value false
+```
+
+Also verify the deployed `web.config` contains:
+
+```xml
+<system.web>
+  <authentication mode="Windows" />
+  <authorization>
+    <deny users="?" />
+  </authorization>
+</system.web>
+
+<system.webServer>
+  <security>
+    <authentication>
+      <windowsAuthentication enabled="true" />
+      <anonymousAuthentication enabled="false" />
+    </authentication>
+  </security>
+</system.webServer>
+```
+
+Finally, update the AD group mapping keys in `web.config` for the production domain:
+
+```xml
+<add key="Auth:AdminGroups" value="DOMAIN\PropertyManager-Admins,BUILTIN\Administrators" />
+<add key="Auth:UserGroups" value="DOMAIN\PropertyManager-Users,BUILTIN\Users" />
 ```
 
 ---

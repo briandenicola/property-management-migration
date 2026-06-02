@@ -30,8 +30,7 @@
                     <li><a ui-sref="tenantsList">Tenants</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                    <li class="navbar-text" ng-if="currentUser">Signed in as {{currentUser.username || currentUser.name}}</li>
-                    <li><a href="" ng-click="main.logout()"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+                    <li class="navbar-text" ng-if="main.isLoggedIn()">Signed in as {{main.getUserName()}}</li>
                 </ul>
             </div>
         </div>

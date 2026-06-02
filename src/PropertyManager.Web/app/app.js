@@ -11,13 +11,6 @@
         $urlRouterProvider.otherwise('/dashboard');
 
         $stateProvider
-            .state('login', {
-                url: '/login',
-                templateUrl: 'views/login.html',
-                controller: 'LoginController',
-                controllerAs: 'vm',
-                publicPage: true
-            })
             .state('dashboard', {
                 url: '/dashboard',
                 templateUrl: 'views/dashboard.html',
@@ -60,14 +53,16 @@
                 controller: 'TenantsListController',
                 controllerAs: 'vm'
             });
-
-        // authInterceptor disabled — backend auth (OWIN/ASP.NET Identity) has been removed
-        // $httpProvider.interceptors.push('authInterceptor');
     }
 
-    AppRun.$inject = ['$rootScope'];
-    function AppRun($rootScope) {
+    AppRun.$inject = ['$rootScope', 'authService'];
+    function AppRun($rootScope, authService) {
         $rootScope.currentUser = null;
-        // Auth guard disabled — backend auth (OWIN/ASP.NET Identity) has been removed
+
+        authService.initialize().then(function (user) {
+            $rootScope.currentUser = user;
+        }).catch(function () {
+            $rootScope.currentUser = null;
+        });
     }
 })();
