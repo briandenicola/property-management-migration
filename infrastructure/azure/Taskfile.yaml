@@ -37,7 +37,7 @@ tasks:
     desc: Destroys the Azure PaaS resources and cleans up Terraform
     cmds:
     - az group delete -n {{.RG}} --yes --no-wait || true
-    - powershell -Command "Remove-Item -Recurse -Force terraform.tfstate.d, .terraform.lock.hcl, .terraform, terraform.tfstate, terraform.tfstate.backup, .terraform.tfstate.lock.info -ErrorAction SilentlyContinue"
+    - pwsh -NoProfile -Command "Remove-Item -Recurse -Force terraform.tfstate.d, .terraform.lock.hcl, .terraform, terraform.tfstate, terraform.tfstate.backup, .terraform.tfstate.lock.info -ErrorAction SilentlyContinue"
     vars:
       RG:
         sh: terraform output -raw resource_group_name
@@ -52,6 +52,6 @@ tasks:
     - pwsh -NoProfile -Command "Remove-Item '{{.ROOT_DIR}}\publish\app.zip' -Force"
     vars:
       RG:
-        sh: terraform output -raw resource_group_name
+        sh: cd "{{.TASKFILE_DIR}}" && terraform output -raw resource_group_name
       APP_NAME:
-        sh: terraform output -raw app_service_name
+        sh: cd "{{.TASKFILE_DIR}}" && terraform output -raw app_service_name

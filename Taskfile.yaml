@@ -37,8 +37,8 @@ tasks:
   clean:
     desc: Cleans the publish output directory
     cmds:
-    - powershell -Command "if (Test-Path '{{.PUBLISH_DIR}}') { Remove-Item -Recurse -Force '{{.PUBLISH_DIR}}' }"
-    - powershell -Command "New-Item -ItemType Directory -Path '{{.PUBLISH_DIR}}' -Force | Out-Null"
+    - pwsh -NoProfile -Command "if (Test-Path '{{.PUBLISH_DIR}}') { Remove-Item -Recurse -Force '{{.PUBLISH_DIR}}' }"
+    - pwsh -NoProfile -Command "New-Item -ItemType Directory -Path '{{.PUBLISH_DIR}}' -Force | Out-Null"
 
   restore:
     desc: Restores NuGet packages
@@ -54,7 +54,7 @@ tasks:
     desc: Publishes the web project to the publish/ folder
     cmds:
     - '"{{.MSBUILD}}" "{{.WEB_PROJECT}}" /p:Configuration=Release /p:DeployOnBuild=true /p:WebPublishMethod=Package /verbosity:minimal /nologo /m'
-    - powershell -Command "Copy-Item '{{.SOLUTION_DIR}}\PropertyManager.Web\obj\Release\Package\PackageTmp\*' '{{.PUBLISH_DIR}}' -Recurse -Force"
+    - pwsh -NoProfile -Command "Copy-Item '{{.SOLUTION_DIR}}\PropertyManager.Web\obj\Release\Package\PackageTmp\*' '{{.PUBLISH_DIR}}' -Recurse -Force"
 
   deploy:
     desc: Builds and deploys the application (build + token replacement instructions)
