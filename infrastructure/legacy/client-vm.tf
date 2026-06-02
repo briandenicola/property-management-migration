@@ -10,7 +10,6 @@ resource "azurerm_network_interface" "client" {
   name                = "${local.resource_name}-client-nic"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
-  dns_servers         = [local.dc_private_ip]
 
   tags = {
     Application = var.tags

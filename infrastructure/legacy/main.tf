@@ -112,7 +112,6 @@ resource "azurerm_network_interface" "this" {
   name                = "${local.resource_name}-nic"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
-  dns_servers         = [local.dc_private_ip]
 
   tags = {
     Application = var.tags
@@ -164,6 +163,8 @@ resource "azurerm_windows_virtual_machine" "this" {
     sku       = "2016-Datacenter"
     version   = "latest"
   }
+
+  depends_on = [azurerm_virtual_network_dns_servers.this]
 }
 
 # --- Data Disk for SQL Server ---
