@@ -85,13 +85,13 @@ resource "azurerm_virtual_machine_extension" "dc_promote" {
       "-DomainNetbiosName '${local.domain_netbios}'",
       "-ForestMode 'WinThreshold'",
       "-DomainMode 'WinThreshold'",
-      "-InstallDns:$$true",
+      "-InstallDns",
       "-SafeModeAdministratorPassword $pw",
       "-DatabasePath 'C:\\Windows\\NTDS'",
       "-LogPath 'C:\\Windows\\NTDS'",
       "-SysvolPath 'C:\\Windows\\SYSVOL'",
-      "-NoRebootOnCompletion:$$false",
-      "-Force:$$true",
+      "-NoRebootOnCompletion:$false",
+      "-Force",
       "\""
     ])
   })
