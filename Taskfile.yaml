@@ -1,5 +1,7 @@
 version: '3'
 
+dotenv: ['infrastructure/azure/.env']
+
 env:
   APP_TITLE: "Property Manager Legacy"
   DEFAULT_REGION: "canadacentral"
