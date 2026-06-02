@@ -27,10 +27,10 @@ resource "azurerm_resource_group" "this" {
   location = local.location
 
   tags = {
-    Application      = var.tags
-    Components       = "App Service; Azure SQL; Blob Storage;"
-    DeployedOn       = timestamp()
-    SecurityControl  = "Ignore"
+    Application     = var.tags
+    Components      = "App Service; Azure SQL; Blob Storage;"
+    DeployedOn      = timestamp()
+    SecurityControl = "Ignore"
   }
 }
 
@@ -71,12 +71,31 @@ resource "azurerm_windows_web_app" "this" {
     }
   }
 
+  auth_settings_v2 {
+    auth_enabled           = true
+    require_authentication = true
+    unauthenticated_action = "RedirectToLoginPage"
+    default_provider       = "azureactivedirectory"
+
+    login {
+      token_store_enabled = true
+    }
+
+    active_directory_v2 {
+      client_id                  = azuread_application.this.client_id
+      client_secret_setting_name = "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET"
+      tenant_auth_endpoint       = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/v2.0"
+      allowed_audiences          = ["api://${azuread_application.this.client_id}"]
+    }
+  }
+
   app_settings = {
     "APPINSIGHTS_INSTRUMENTATIONKEY"             = azurerm_application_insights.this.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING"      = azurerm_application_insights.this.connection_string
     "ApplicationInsightsAgent_EXTENSION_VERSION" = "~2"
     "BlobStorage__ServiceUri"                    = azurerm_storage_account.this.primary_blob_endpoint
     "BlobStorage__ContainerName"                 = azurerm_storage_container.attachments.name
+    "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET"   = azuread_application_password.this.value
     "MaxFileSizeBytes"                           = "26214400"
   }
 

@@ -51,3 +51,13 @@ output "application_insights_key" {
   value       = azurerm_application_insights.this.instrumentation_key
   sensitive   = true
 }
+
+output "entra_app_client_id" {
+  description = "Entra application (client) ID for App Service Easy Auth"
+  value       = azuread_application.this.client_id
+}
+
+output "entra_tenant_id" {
+  description = "Entra tenant ID for App Service Easy Auth"
+  value       = data.azuread_client_config.current.tenant_id
+}
