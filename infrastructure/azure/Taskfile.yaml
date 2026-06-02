@@ -41,3 +41,17 @@ tasks:
     vars:
       RG:
         sh: terraform output -raw resource_group_name
+
+  deploy:
+    desc: Builds the app and deploys to Azure App Service
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+    - task: :build
+    - powershell -Command "Compress-Archive -Path '{{.ROOT_DIR}}\publish\*' -DestinationPath '{{.ROOT_DIR}}\publish\app.zip' -Force"
+    - az webapp deploy --resource-group {{.RG}} --name {{.APP_NAME}} --src-path "{{.ROOT_DIR}}\publish\app.zip" --type zip --clean true
+    - powershell -Command "Remove-Item '{{.ROOT_DIR}}\publish\app.zip' -Force"
+    vars:
+      RG:
+        sh: terraform output -raw resource_group_name
+      APP_NAME:
+        sh: terraform output -raw app_service_name
