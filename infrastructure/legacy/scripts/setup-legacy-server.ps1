@@ -101,17 +101,15 @@ Write-Log "Installing URL Rewrite Module..."
 # ============================================================
 # 3. Install SQL Server 2016 Express
 # ============================================================
-Write-Log "Downloading SQL Server 2016 Express..."
+Write-Log "SQL Server 2016 Express installation skipped (install manually or via BACPAC restore)"
+
+# To install SQL Server Express manually, download from:
+# https://download.microsoft.com/download/9/0/7/907AD35F-9F9C-43A5-9789-52470555DB90/ENU/SQLEXPR_x64_ENU.exe
 
 # $sqlExpressUrl = "https://download.microsoft.com/download/9/0/7/907AD35F-9F9C-43A5-9789-52470555DB90/ENU/SQLEXPR_x64_ENU.exe"
 # $sqlInstaller = ".\SQLEXPR_x64_ENU.exe"
 # Invoke-WebRequest -Uri $sqlExpressUrl -OutFile $sqlInstaller -UseBasicParsing
-
-# Write-Log "Installing SQL Server 2016 Express..."
-
-# # Extract and run setup
 # Start-Process -FilePath $sqlInstaller -ArgumentList "/qs /x:.\\SQLSetup" -Wait -NoNewWindow
-
 # $setupArgs = @(
 #     "/Q",
 #     "/ACTION=Install",
@@ -127,70 +125,49 @@ Write-Log "Downloading SQL Server 2016 Express..."
 #     "/TCPENABLED=1",
 #     "/IACCEPTSQLSERVERLICENSETERMS"
 # )
-
-Start-Process -FilePath ".\SQLSetup\setup.exe" -ArgumentList ($setupArgs -join " ") -Wait -NoNewWindow
-Write-Log "SQL Server 2016 Express installed"
+# Start-Process -FilePath ".\SQLSetup\setup.exe" -ArgumentList ($setupArgs -join " ") -Wait -NoNewWindow
 
 # Enable TCP/IP and set port 1433
-Write-Log "Configuring SQL Server network protocols..."
-Import-Module "sqlps" -DisableNameChecking -ErrorAction SilentlyContinue
+# Write-Log "Configuring SQL Server network protocols..."
+# Import-Module "sqlps" -DisableNameChecking -ErrorAction SilentlyContinue
 
 # Start SQL Server service
-Set-Service -Name MSSQLSERVER -StartupType Automatic
-Start-Service -Name MSSQLSERVER -ErrorAction SilentlyContinue
-Start-Service -Name "SQLBrowser" -ErrorAction SilentlyContinue
-Set-Service -Name "SQLBrowser" -StartupType Automatic
+# Set-Service -Name MSSQLSERVER -StartupType Automatic
+# Start-Service -Name MSSQLSERVER -ErrorAction SilentlyContinue
+# Start-Service -Name "SQLBrowser" -ErrorAction SilentlyContinue
+# Set-Service -Name "SQLBrowser" -StartupType Automatic
 
 # ============================================================
-# 4. Create the PropertyManager database
+# 4. Create the PropertyManager database (requires SQL Server to be installed)
 # ============================================================
-Write-Log "Creating PropertyManager database..."
+# Skipped - SQL Server is not installed by this script.
+# Run this section manually after installing SQL Server Express.
 
-$sqlCmd = @"
-IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'PropertyManager')
-BEGIN
-    CREATE DATABASE [PropertyManager]
-    ON PRIMARY (
-        NAME = N'PropertyManager',
-        FILENAME = N'F:\SQLData\PropertyManager.mdf',
-        SIZE = 64MB, FILEGROWTH = 64MB
-    )
-    LOG ON (
-        NAME = N'PropertyManager_log',
-        FILENAME = N'F:\SQLLog\PropertyManager_log.ldf',
-        SIZE = 32MB, FILEGROWTH = 32MB
-    )
-END
-GO
+# $sqlCmd = @"
+# IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'PropertyManager')
+# BEGIN
+#     CREATE DATABASE [PropertyManager]
+#     ON PRIMARY (
+#         NAME = N'PropertyManager',
+#         FILENAME = N'F:\SQLData\PropertyManager.mdf',
+#         SIZE = 64MB, FILEGROWTH = 64MB
+#     )
+#     LOG ON (
+#         NAME = N'PropertyManager_log',
+#         FILENAME = N'F:\SQLLog\PropertyManager_log.ldf',
+#         SIZE = 32MB, FILEGROWTH = 32MB
+#     )
+# END
+# GO
+# "@
 
-USE [PropertyManager]
-GO
-
--- Create the application login
-IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'PropertyProApp')
-BEGIN
-    CREATE LOGIN [PropertyProApp] WITH PASSWORD = '$SqlSaPassword', DEFAULT_DATABASE = [PropertyManager]
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'PropertyProApp')
-BEGIN
-    CREATE USER [PropertyProApp] FOR LOGIN [PropertyProApp]
-    ALTER ROLE [db_owner] ADD MEMBER [PropertyProApp]
-END
-GO
-"@
-
-# Wait for SQL Server to be ready
-$attempts = 0
-do {
-    $attempts++
-    Start-Sleep -Seconds 5
-    $sqlReady = sqlcmd -U sa -P $SqlSaPassword -Q "SELECT 1" 2>$null
-} while (-not $sqlReady -and $attempts -lt 12)
-
-sqlcmd -U sa -P $SqlSaPassword -Q $sqlCmd
-Write-Log "PropertyManager database created"
+# $attempts = 0
+# do {
+#     $attempts++
+#     Start-Sleep -Seconds 5
+#     $sqlReady = sqlcmd -U sa -P $SqlSaPassword -Q "SELECT 1" 2>$null
+# } while (-not $sqlReady -and $attempts -lt 12)
+# sqlcmd -U sa -P $SqlSaPassword -Q $sqlCmd
 
 # ============================================================
 # 5. Configure IIS site for PropertyPro
