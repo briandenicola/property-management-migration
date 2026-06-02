@@ -190,3 +190,23 @@ resource "azurerm_virtual_machine_data_disk_attachment" "sql_data" {
   caching            = "ReadOnly"
 }
 
+# --- IIS + SQL Server Setup via Custom Script Extension ---
+resource "azurerm_virtual_machine_extension" "iis_setup" {
+  name                 = "setup-legacy-server"
+  virtual_machine_id   = azurerm_windows_virtual_machine.this.id
+  publisher            = "Microsoft.Compute"
+  type                 = "CustomScriptExtension"
+  type_handler_version = "1.10"
+
+  settings = jsonencode({
+    commandToExecute = "powershell -ExecutionPolicy Unrestricted -Command \"& { $ErrorActionPreference='Stop'; $features=@('Web-Server','Web-WebServer','Web-Common-Http','Web-Static-Content','Web-Default-Doc','Web-Http-Errors','Web-App-Dev','Web-Asp-Net45','Web-Net-Ext45','Web-ISAPI-Ext','Web-ISAPI-Filter','Web-Health','Web-Http-Logging','Web-Security','Web-Filtering','Web-Windows-Auth','Web-Mgmt-Tools','Web-Mgmt-Console','NET-Framework-45-Core','NET-Framework-45-ASPNET'); Install-WindowsFeature -Name $features -IncludeManagementTools; Import-Module WebAdministration; $sitePath='C:\\inetpub\\PropertyPro'; New-Item -ItemType Directory -Path $sitePath -Force; New-Item -ItemType Directory -Path (Join-Path $sitePath 'App_Data\\Uploads\\Temp') -Force; if(!(Test-Path 'IIS:\\AppPools\\PropertyPro')){New-WebAppPool -Name 'PropertyPro'}; Set-ItemProperty 'IIS:\\AppPools\\PropertyPro' -Name 'managedRuntimeVersion' -Value 'v4.0'; Set-ItemProperty 'IIS:\\AppPools\\PropertyPro' -Name 'managedPipelineMode' -Value 'Integrated'; Remove-WebSite -Name 'Default Web Site' -ErrorAction SilentlyContinue; if(!(Get-WebSite -Name 'PropertyPro' -ErrorAction SilentlyContinue)){New-WebSite -Name 'PropertyPro' -PhysicalPath $sitePath -ApplicationPool 'PropertyPro' -Port 80 -Force}; '<html><body><h1>PropertyPro - Ready for deployment</h1></body></html>' | Out-File (Join-Path $sitePath 'index.html') -Encoding UTF8 }\""
+  })
+
+  tags = {
+    Application = var.tags
+    DeployedOn  = timestamp()
+  }
+
+  depends_on = [azurerm_virtual_machine_data_disk_attachment.sql_data]
+}
+
