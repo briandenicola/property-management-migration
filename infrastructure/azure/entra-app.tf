@@ -1,51 +1,13 @@
 data "azuread_client_config" "current" {}
 
-resource "random_uuid" "entra_app_role_admin" {}
-
-resource "random_uuid" "entra_app_role_user" {}
-
-resource "azuread_application" "this" {
-  display_name     = "${local.resource_name}-propertymanager"
-  sign_in_audience = "AzureADMyOrg"
-
-  app_role {
-    allowed_member_types = ["User"]
-    description          = "PropertyPro administrators"
-    display_name         = "Admin"
-    enabled              = true
-    id                   = random_uuid.entra_app_role_admin.result
-    value                = "Admin"
-  }
-
-  app_role {
-    allowed_member_types = ["User"]
-    description          = "PropertyPro users"
-    display_name         = "User"
-    enabled              = true
-    id                   = random_uuid.entra_app_role_user.result
-    value                = "User"
-  }
-
-  web {
-    redirect_uris = ["https://${local.resource_name}-app.azurewebsites.net/.auth/login/aad/callback"]
-  }
-
-  optional_claims {
-    id_token {
-      name = "email"
-    }
-
-    id_token {
-      name = "groups"
-    }
-  }
-}
-
-resource "azuread_service_principal" "this" {
-  client_id = azuread_application.this.client_id
+# App Registration is created manually in Azure Portal with Admin/User App Roles.
+# Pass the client_id as a variable; Terraform creates a short-lived secret for Easy Auth.
+data "azuread_application" "this" {
+  client_id = var.entra_app_client_id
 }
 
 resource "azuread_application_password" "this" {
-  application_id = azuread_application.this.id
+  application_id = data.azuread_application.this.id
   display_name   = "App Service Easy Auth"
+  end_date       = timeadd(timestamp(), "168h") # 7 days
 }

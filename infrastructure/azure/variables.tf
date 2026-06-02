@@ -14,3 +14,8 @@ variable "sql_admin_username" {
   type        = string
   default     = "sqladmin"
 }
+
+variable "entra_app_client_id" {
+  description = "Client ID of the manually-created Entra ID App Registration for Easy Auth"
+  type        = string
+}

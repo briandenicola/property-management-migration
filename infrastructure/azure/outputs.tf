@@ -54,7 +54,7 @@ output "application_insights_key" {
 
 output "entra_app_client_id" {
   description = "Entra application (client) ID for App Service Easy Auth"
-  value       = azuread_application.this.client_id
+  value       = var.entra_app_client_id
 }
 
 output "entra_tenant_id" {
