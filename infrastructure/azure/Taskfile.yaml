@@ -47,9 +47,9 @@ tasks:
     dir: "{{.ROOT_DIR}}"
     cmds:
     - task: :build
-    - powershell -Command "Compress-Archive -Path '{{.ROOT_DIR}}\publish\*' -DestinationPath '{{.ROOT_DIR}}\publish\app.zip' -Force"
+    - pwsh -NoProfile -Command "Compress-Archive -Path '{{.ROOT_DIR}}\publish\*' -DestinationPath '{{.ROOT_DIR}}\publish\app.zip' -Force"
     - az webapp deploy --resource-group {{.RG}} --name {{.APP_NAME}} --src-path "{{.ROOT_DIR}}\publish\app.zip" --type zip --clean true
-    - powershell -Command "Remove-Item '{{.ROOT_DIR}}\publish\app.zip' -Force"
+    - pwsh -NoProfile -Command "Remove-Item '{{.ROOT_DIR}}\publish\app.zip' -Force"
     vars:
       RG:
         sh: terraform output -raw resource_group_name
